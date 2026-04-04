@@ -172,6 +172,7 @@ function getElapsedMs(record) {
 function withRecordDefaults(record) {
   return {
     isSketched: Boolean(record?.isSketched),
+    isFavorite: Boolean(record?.isFavorite),
     sketchedAt: record?.sketchedAt || null,
     durationMs: Number(record?.durationMs || 0),
     history: Array.isArray(record?.history) ? record.history : [],
@@ -189,6 +190,7 @@ function mergeImageWithState(image, state) {
     ...image,
     imageUrl: `/image/${encodeURIComponent(image.relativePath)}`,
     isSketched: record.isSketched,
+    isFavorite: record.isFavorite,
     sketchedAt: record.sketchedAt,
     durationMs: record.durationMs,
     timer: {
@@ -506,6 +508,39 @@ app.post("/api/sketch/mark", async (req, res) => {
   }
 });
 
+app.post("/api/favorite/toggle", async (req, res) => {
+  try {
+    const images = await indexImages();
+    const imagesById = new Map(images.map((item) => [item.id, item]));
+    const imageId = req.body?.imageId;
+    const validation = validateImage(imagesById, imageId);
+    if (!validation.ok) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const state = await loadState();
+    const record = withRecordDefaults(state.images[imageId]);
+    record.isFavorite = Boolean(req.body?.isFavorite);
+    state.images[imageId] = record;
+    await saveState(state);
+
+    return res.json({ ok: true, isFavorite: record.isFavorite });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to update favorite status", detail: error.message });
+  }
+});
+
+app.post("/api/sessions/clear", async (_req, res) => {
+  try {
+    const state = await loadState();
+    state.sessions = [];
+    await saveState(state);
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to clear sessions", detail: error.message });
+  }
+});
+
 app.get("/image/*", async (req, res) => {
   try {
     const relativePath = decodeURIComponent(req.params[0]);
@@ -524,19 +559,19 @@ app.get("/image/*", async (req, res) => {
 app.use(
   express.static(PUBLIC_DIR, {
     setHeaders: (res, filePath) => {
-      if (!IS_PROD) {
+      if (filePath.endsWith("index.html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         return;
       }
-      if (filePath.endsWith("index.html")) {
-        res.setHeader("Cache-Control", "no-cache");
-        return;
+      if (IS_PROD) {
+        res.setHeader("Cache-Control", "public, max-age=86400");
       }
-      res.setHeader("Cache-Control", "public, max-age=86400");
     },
   })
 );
 
 app.get("*", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 

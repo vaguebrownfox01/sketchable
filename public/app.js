@@ -49,7 +49,9 @@ const elements = {
   viewerTitle: document.getElementById("viewerTitle"),
   viewerSubtitle: document.getElementById("viewerSubtitle"),
   viewerImage: document.getElementById("viewerImage"),
+  viewerFavoriteStar: document.getElementById("viewerFavoriteStar"),
   focusBtn: document.getElementById("focusBtn"),
+  favoriteBtn: document.getElementById("favoriteBtn"),
   markBtn: document.getElementById("markBtn"),
   startBtn: document.getElementById("startBtn"),
   pauseBtn: document.getElementById("pauseBtn"),
@@ -63,10 +65,12 @@ const elements = {
   modalTitle: document.getElementById("modalTitle"),
   modalSubtitle: document.getElementById("modalSubtitle"),
   modalImage: document.getElementById("modalImage"),
+  modalFavoriteStar: document.getElementById("modalFavoriteStar"),
   modalTimerDisplay: document.getElementById("modalTimerDisplay"),
   modalStartBtn: document.getElementById("modalStartBtn"),
   modalPauseBtn: document.getElementById("modalPauseBtn"),
   modalStopBtn: document.getElementById("modalStopBtn"),
+  modalFavoriteBtn: document.getElementById("modalFavoriteBtn"),
   modalMarkBtn: document.getElementById("modalMarkBtn"),
   modeButtons: Array.from(document.querySelectorAll(".mode-btn")),
   presetButtons: Array.from(document.querySelectorAll(".preset-btn")),
@@ -85,6 +89,7 @@ const elements = {
   queueList: document.getElementById("queueList"),
   timelineModal: document.getElementById("timelineModal"),
   closeTimelineBtn: document.getElementById("closeTimelineBtn"),
+  clearSessionsBtn: document.getElementById("clearSessionsBtn"),
   timelineModeFilter: document.getElementById("timelineModeFilter"),
   timelineMonthFilter: document.getElementById("timelineMonthFilter"),
   timelineBody: document.getElementById("timelineBody"),
@@ -92,6 +97,7 @@ const elements = {
   closeHelpBtn: document.getElementById("closeHelpBtn"),
   dashboardModal: document.getElementById("dashboardModal"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
+  clearSessionsDashboardBtn: document.getElementById("clearSessionsDashboardBtn"),
   dashTotalSessions: document.getElementById("dashTotalSessions"),
   dashTotalTime: document.getElementById("dashTotalTime"),
   dashAvgTime: document.getElementById("dashAvgTime"),
@@ -163,7 +169,11 @@ function applyFilters() {
   const isSketchedView = state.activeTab === "sketched";
 
   state.filtered = state.images.filter((image) => {
-    if (isSketchedView ? !image.isSketched : image.isSketched) {
+    if (state.activeTab === "favorites") {
+      if (!image.isFavorite) {
+        return false;
+      }
+    } else if (isSketchedView ? !image.isSketched : image.isSketched) {
       return false;
     }
     if (!inSelectedRange(image)) {
@@ -215,6 +225,12 @@ function renderGallery() {
 
     card.dataset.imageId = image.id;
     thumb.src = image.imageUrl;
+    if (image.isFavorite) {
+      const badge = document.createElement("span");
+      badge.className = "favorite-badge";
+      badge.textContent = "★";
+      button.appendChild(badge);
+    }
     title.textContent = image.parsedDate ? image.parsedDate.date : "undated";
     subtitle.textContent = `- ${image.folder}`;
     detail.textContent = isImageInQueue(image.id)
@@ -234,11 +250,21 @@ function renderGallery() {
   elements.galleryCount.textContent = `${state.filtered.length} image${state.filtered.length === 1 ? "" : "s"} in ${state.activeTab}`;
 }
 
+function toggleSelectedFavoriteStatus() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
+  }
+  performAction((image) => apiPost("/api/favorite/toggle", { imageId: image.id, isFavorite: !image.isFavorite }));
+}
+
 function renderModalContent(image) {
   elements.modalTitle.textContent = getDisplayDate(image);
   elements.modalSubtitle.textContent = `${image.fileName} · ${image.folder}`;
   elements.modalImage.src = image.imageUrl;
   elements.modalTimerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  elements.modalFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
+  elements.modalFavoriteBtn.textContent = image.isFavorite ? "unfavorite" : "favorite";
   elements.modalMarkBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 }
 
@@ -257,6 +283,8 @@ function renderViewer() {
   elements.viewerSubtitle.textContent = `${image.fileName} · ${image.folder}${queuePosition >= 0 ? ` · Queue #${queuePosition + 1}` : ""}`;
   elements.viewerImage.src = image.imageUrl;
   elements.timerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  elements.viewerFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
+  elements.favoriteBtn.textContent = image.isFavorite ? "unfavorite" : "favorite";
   elements.markBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 
   if (image.isSketched) {
@@ -340,6 +368,7 @@ function renderQueue() {
 function renderTimeline() {
   const modeFilter = state.timelineMode;
   const monthFilter = state.timelineMonth;
+  const imageById = new Map(state.images.map((image) => [image.id, image]));
   const rows = [...state.sessions]
     .reverse()
     .filter((session) => {
@@ -357,8 +386,21 @@ function renderTimeline() {
   elements.timelineBody.innerHTML = "";
   rows.forEach((session) => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${formatDateTime(session.stoppedAt)}</td><td>${formatDateTime(session.imageDateTime)}</td><td>${formatDuration(session.durationMs)}</td><td>${session.mode}</td><td>${session.imageFileName || session.imageId}</td>`;
+    const image = imageById.get(session.imageId);
+    const imageCell = image
+      ? `<button class="timeline-thumb-btn" type="button" data-image-id="${image.id}" title="open image"><img class="timeline-thumb" src="${image.imageUrl}" alt="timeline image" /></button>`
+      : `<span class="timeline-missing">missing</span>`;
+    tr.innerHTML = `<td>${formatDateTime(session.stoppedAt)}</td><td>${formatDateTime(session.imageDateTime)}</td><td>${formatDuration(session.durationMs)}</td><td>${session.mode}</td><td>${imageCell}</td>`;
     elements.timelineBody.appendChild(tr);
+
+    const thumbBtn = tr.querySelector(".timeline-thumb-btn");
+    if (thumbBtn) {
+      thumbBtn.addEventListener("click", () => {
+        state.selectedId = session.imageId;
+        closeTimelineModal();
+        render();
+      });
+    }
   });
 
   if (!rows.length) {
@@ -375,7 +417,7 @@ function renderBarList(container, items) {
   items.forEach((item) => {
     const row = document.createElement("div");
     row.className = "bar-row";
-    const width = Math.max(6, Math.round((item.value / max) * 100));
+    const width = item.value <= 0 ? 0 : Math.max(6, Math.round((item.value / max) * 100));
     row.innerHTML = `<span>${item.label}</span><div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div><strong>${item.value}</strong>`;
     container.appendChild(row);
   });
@@ -413,6 +455,7 @@ function renderDashboard() {
   });
 
   const sketchedCount = images.filter((image) => image.isSketched).length;
+  const favoriteCount = images.filter((image) => image.isFavorite).length;
   const availableCount = images.length - sketchedCount;
 
   elements.dashTotalSessions.textContent = String(totalSessions);
@@ -432,7 +475,7 @@ function renderDashboard() {
 
   const bestMonth = [...monthCounts].sort((a, b) => b.value - a.value)[0];
   const avgMinutes = avgDuration ? Math.max(1, Math.round(avgDuration / 60000)) : 0;
-  elements.dashInsights.innerHTML = `<p>most active month: <strong>${bestMonth.label}</strong> (${bestMonth.value})</p><p>average pace: <strong>${avgMinutes} min</strong> per sketch</p>`;
+  elements.dashInsights.innerHTML = `<p>most active month: <strong>${bestMonth.label}</strong> (${bestMonth.value})</p><p>average pace: <strong>${avgMinutes} min</strong> per sketch</p><p>favorites saved: <strong>${favoriteCount}</strong></p>`;
 }
 
 function renderTabs() {
@@ -737,6 +780,12 @@ function closeDashboardModal() {
   }
 }
 
+async function clearSessionStats() {
+  await apiPost("/api/sessions/clear", {});
+  await reloadData();
+  render();
+}
+
 function closeTimelineModal() {
   elements.timelineModal.classList.add("is-hidden");
   if (elements.focusModal.classList.contains("is-hidden")) {
@@ -841,6 +890,8 @@ function attachEvents() {
   elements.modalStartBtn.addEventListener("click", startSketch);
   elements.modalPauseBtn.addEventListener("click", pauseSketch);
   elements.modalStopBtn.addEventListener("click", stopSketch);
+  elements.favoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
+  elements.modalFavoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
   elements.modalMarkBtn.addEventListener("click", toggleSelectedSketchStatus);
 
   elements.randomBtn.addEventListener("click", chooseRandomImage);
@@ -887,6 +938,7 @@ function attachEvents() {
   });
 
   elements.closeTimelineBtn.addEventListener("click", closeTimelineModal);
+  elements.clearSessionsBtn.addEventListener("click", clearSessionStats);
   elements.timelineModal.addEventListener("click", (event) => {
     if (event.target && event.target.dataset.closeTimeline === "true") {
       closeTimelineModal();
@@ -901,6 +953,7 @@ function attachEvents() {
   });
 
   elements.closeDashboardBtn.addEventListener("click", closeDashboardModal);
+  elements.clearSessionsDashboardBtn.addEventListener("click", clearSessionStats);
   elements.dashboardModal.addEventListener("click", (event) => {
     if (event.target && event.target.dataset.closeDashboard === "true") {
       closeDashboardModal();
@@ -951,6 +1004,8 @@ function attachEvents() {
       await addSelectedToQueue();
     } else if (key === "d") {
       openDashboardModal();
+    } else if (key === "v") {
+      toggleSelectedFavoriteStatus();
     }
   });
 

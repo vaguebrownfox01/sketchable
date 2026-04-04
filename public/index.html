@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>sketchable</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260404-3" />
   </head>
   <body>
     <div class="app-shell">
@@ -16,6 +16,7 @@
           <div class="tab-group">
             <button class="tab is-active" data-tab="available" type="button">available</button>
             <button class="tab" data-tab="sketched" type="button">sketched</button>
+            <button class="tab" data-tab="favorites" type="button">favorites</button>
             <button id="dashboardBtn" class="help-btn" type="button" aria-label="open dashboard" title="dashboard">◫</button>
             <button id="helpBtn" class="help-btn" type="button" aria-label="how to use sketchable" title="how to use">?</button>
             <button id="randomBtn" class="random-btn" type="button" aria-label="pick random image" title="random image">
@@ -108,6 +109,7 @@
               </div>
               <div class="viewer-actions">
                 <button id="focusBtn" type="button">focus view</button>
+                <button id="favoriteBtn" type="button">favorite</button>
                 <button id="markBtn" type="button"></button>
               </div>
             </div>
@@ -122,6 +124,7 @@
             </div>
 
             <div class="resizable-stage">
+              <span id="viewerFavoriteStar" class="viewer-favorite-star is-hidden">★</span>
               <img id="viewerImage" alt="Selected reference" />
             </div>
 
@@ -161,11 +164,13 @@
             <button id="modalStartBtn" type="button">start</button>
             <button id="modalPauseBtn" type="button">pause</button>
             <button id="modalStopBtn" type="button">stop</button>
+            <button id="modalFavoriteBtn" type="button">favorite</button>
             <button id="modalMarkBtn" type="button"></button>
           </div>
         </div>
 
         <div class="focus-image-wrap">
+          <span id="modalFavoriteStar" class="viewer-favorite-star is-hidden">★</span>
           <img id="modalImage" alt="Focused reference" />
         </div>
       </div>
@@ -179,7 +184,10 @@
             <h2>timeline</h2>
             <p>all sketch sessions</p>
           </div>
-          <button id="closeTimelineBtn" type="button">close</button>
+          <div class="timeline-top-actions">
+            <button id="clearSessionsBtn" type="button">clear stats</button>
+            <button id="closeTimelineBtn" type="button">close</button>
+          </div>
         </div>
         <div class="timeline-filters">
           <select id="timelineModeFilter">
@@ -220,7 +228,7 @@
           <p>choose <strong>◻ free</strong> for open timing, or <strong>◷ drill</strong> to practice with short focused rounds.</p>
           <p>hit <strong>start</strong>, <strong>pause</strong>, and <strong>stop</strong> as you sketch. mark done pieces in one tap.</p>
           <p>open <strong>☰ timeline</strong> anytime to review your progress and session durations.</p>
-          <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, r random, f focus, t timeline.</p>
+          <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, v favorite, r random, f focus, t timeline.</p>
         </div>
       </div>
     </div>
@@ -233,7 +241,10 @@
             <h2>dashboard</h2>
             <p>quick sketch insights</p>
           </div>
-          <button id="closeDashboardBtn" type="button">close</button>
+          <div class="timeline-top-actions">
+            <button id="clearSessionsDashboardBtn" type="button">clear stats</button>
+            <button id="closeDashboardBtn" type="button">close</button>
+          </div>
         </div>
 
         <div class="dashboard-cards">
@@ -262,6 +273,6 @@
       </div>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="/app.js?v=20260404-3"></script>
   </body>
 </html>
