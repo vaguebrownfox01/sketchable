@@ -59,6 +59,26 @@ npm start
 
 `http://localhost:3100`
 
+## run in production mode
+
+use this for lan access and production-like behavior (compression, caching, explicit host bind):
+
+```bash
+npm run start:prod
+```
+
+then open from another device on your network (example):
+
+`http://192.168.1.42:3100`
+
+optional process manager (pm2):
+
+```bash
+npm install -g pm2
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
 ## notes
 
 - image scanning is recursive from the project root.

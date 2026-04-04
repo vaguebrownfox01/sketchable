@@ -1,10 +1,13 @@
 const express = require("express");
+const compression = require("compression");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3100;
+const HOST = process.env.HOST || "127.0.0.1";
+const IS_PROD = process.env.NODE_ENV === "production";
 
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
@@ -22,6 +25,11 @@ const DEFAULT_SETTINGS = {
 };
 
 app.use(express.json());
+app.use(compression());
+
+if (IS_PROD) {
+  app.disable("x-powered-by");
+}
 
 function createImageId(relativePath) {
   return crypto.createHash("sha1").update(relativePath).digest("hex").slice(0, 16);
@@ -513,12 +521,25 @@ app.get("/image/*", async (req, res) => {
   }
 });
 
-app.use(express.static(PUBLIC_DIR));
+app.use(
+  express.static(PUBLIC_DIR, {
+    setHeaders: (res, filePath) => {
+      if (!IS_PROD) {
+        return;
+      }
+      if (filePath.endsWith("index.html")) {
+        res.setHeader("Cache-Control", "no-cache");
+        return;
+      }
+      res.setHeader("Cache-Control", "public, max-age=86400");
+    },
+  })
+);
 
 app.get("*", (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Sketchable running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`sketchable running on http://${HOST}:${PORT} (${IS_PROD ? "production" : "development"})`);
 });
