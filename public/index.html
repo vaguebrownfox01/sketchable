@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sketchable</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="utility-row">
+          <div class="search-wrap">
+            <input id="searchInput" type="search" placeholder="Search references" />
+          </div>
+          <div class="tab-group">
+            <button class="tab is-active" data-tab="available" type="button">Available</button>
+            <button class="tab" data-tab="sketched" type="button">Sketched</button>
+            <button id="randomBtn" class="random-btn" type="button" aria-label="Pick random image" title="Random image">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 5h4v2H7c-1.3 0-2.5.6-3.2 1.7L2 11l1.8 1.3L5.6 10c.4-.6 1.1-1 1.8-1zm10 0h5v5h-2V8.4l-4.4 4.4-1.4-1.4L18.6 7H17zm-7 12h4c.7 0 1.4-.4 1.8-1l1.8-2.3L20 15l-1.8 2.3c-.8 1.1-1.9 1.7-3.2 1.7h-4zm8.6-6l1.4 1.4L15.6 17H17v2h-5v-5h2v1.6z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="range-group" id="rangeGroup">
+          <button class="range-tab is-active" data-range="all" data-label="All" type="button">All</button>
+          <button class="range-tab" data-range="jan" data-label="Jan" type="button">Jan</button>
+          <button class="range-tab" data-range="feb" data-label="Feb" type="button">Feb</button>
+          <button class="range-tab" data-range="mar" data-label="Mar" type="button">Mar</button>
+          <button class="range-tab" data-range="apr" data-label="Apr" type="button">Apr</button>
+          <button class="range-tab" data-range="may" data-label="May" type="button">May</button>
+          <button class="range-tab" data-range="jun" data-label="Jun" type="button">Jun</button>
+          <button class="range-tab" data-range="jul" data-label="Jul" type="button">Jul</button>
+          <button class="range-tab" data-range="aug" data-label="Aug" type="button">Aug</button>
+          <button class="range-tab" data-range="sep" data-label="Sep" type="button">Sep</button>
+          <button class="range-tab" data-range="oct" data-label="Oct" type="button">Oct</button>
+          <button class="range-tab" data-range="nov" data-label="Nov" type="button">Nov</button>
+          <button class="range-tab" data-range="dec" data-label="Dec" type="button">Dec</button>
+          <button class="range-tab" data-range="undated" data-label="Undated" type="button">Undated</button>
+        </div>
+      </header>
+
+      <main id="splitLayout" class="split-layout">
+        <section class="gallery-panel">
+          <div id="galleryCount" class="panel-meta"></div>
+          <div id="galleryGrid" class="gallery-grid"></div>
+        </section>
+        <div id="resizeHandle" class="resize-handle" aria-hidden="true"></div>
+        <section class="viewer-panel">
+          <div id="emptyViewer" class="empty-viewer">
+            <h2>No image selected</h2>
+            <p>Pick an image from the gallery to begin.</p>
+          </div>
+
+          <div id="viewerContent" class="viewer-content is-hidden">
+            <div class="viewer-top">
+              <div>
+                <h2 id="viewerTitle"></h2>
+                <p id="viewerSubtitle"></p>
+              </div>
+              <div class="viewer-actions">
+                <button id="focusBtn" type="button">Focus View</button>
+                <button id="markBtn" type="button"></button>
+              </div>
+            </div>
+
+            <div class="timer-card">
+              <div id="timerDisplay" class="timer-display">00:00</div>
+              <div class="timer-actions">
+                <button id="startBtn" type="button">Start</button>
+                <button id="pauseBtn" type="button">Pause</button>
+                <button id="stopBtn" type="button">Stop</button>
+              </div>
+            </div>
+
+            <div class="resizable-stage">
+              <img id="viewerImage" alt="Selected reference" />
+            </div>
+
+            <div id="historyMeta" class="history-meta"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="cardTemplate">
+      <article class="image-card">
+        <button class="thumb-wrap" type="button">
+          <img class="thumb" loading="lazy" alt="Reference thumbnail" />
+        </button>
+        <div class="card-meta">
+          <div class="card-title"></div>
+          <div class="card-subtitle"></div>
+          <div class="card-detail"></div>
+        </div>
+      </article>
+    </template>
+
+    <div id="focusModal" class="focus-modal is-hidden" role="dialog" aria-modal="true" aria-label="Focused sketch view">
+      <div class="focus-backdrop" data-close-modal="true"></div>
+      <div class="focus-content">
+        <div class="focus-top">
+          <div>
+            <h2 id="modalTitle"></h2>
+            <p id="modalSubtitle"></p>
+          </div>
+          <button id="closeModalBtn" type="button">Close</button>
+        </div>
+
+        <div class="timer-card focus-timer">
+          <div id="modalTimerDisplay" class="timer-display">00:00</div>
+          <div class="timer-actions">
+            <button id="modalStartBtn" type="button">Start</button>
+            <button id="modalPauseBtn" type="button">Pause</button>
+            <button id="modalStopBtn" type="button">Stop</button>
+            <button id="modalMarkBtn" type="button"></button>
+          </div>
+        </div>
+
+        <div class="focus-image-wrap">
+          <img id="modalImage" alt="Focused reference" />
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

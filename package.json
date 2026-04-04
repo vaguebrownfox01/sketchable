@@ -1,0 +1,12 @@
+{
+  "name": "sketchable",
+  "version": "1.0.0",
+  "description": "Local gallery and sketch timer webapp",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
