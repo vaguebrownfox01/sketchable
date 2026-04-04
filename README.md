@@ -14,7 +14,7 @@ sketchable is a local-first sketch reference app. it indexes your image folders,
 ### sketch workflow
 - start / pause / stop timer
 - free mode and drill mode
-- drill presets + custom duration + rounds
+- drill presets + custom duration (queue-based)
 - auto-next option after stop
 - focus modal for distraction-free reference view
 
@@ -85,5 +85,3 @@ pm2 save
 - supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`.
 - excluded folders include `cwooks`, `node_modules`, `public`, `data`, and `.git`.
 - state schema includes settings, queue, sessions, and per-image records.
-
-> opencode -s ses_2a7b327b7ffegnVySESOny1zCW

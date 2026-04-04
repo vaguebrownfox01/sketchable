@@ -387,6 +387,9 @@ app.post("/api/sketch/start", async (req, res) => {
 
     const state = await loadState();
     const record = withRecordDefaults(state.images[imageId]);
+    if (req.body?.resetTimer === true) {
+      record.timer = { isRunning: false, runningSince: null, elapsedMs: 0 };
+    }
     if (!record.timer.isRunning) {
       record.timer.isRunning = true;
       record.timer.runningSince = Date.now();
@@ -563,6 +566,16 @@ app.post("/api/sessions/clear", async (_req, res) => {
     return res.json({ ok: true });
   } catch (error) {
     return res.status(500).json({ error: "Failed to clear sessions", detail: error.message });
+  }
+});
+
+app.post("/api/state/reset", async (_req, res) => {
+  try {
+    const state = normalizeState({});
+    await saveState(state);
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to reset state", detail: error.message });
   }
 });
 

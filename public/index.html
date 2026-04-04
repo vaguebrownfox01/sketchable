@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>sketchable</title>
-    <link rel="stylesheet" href="/styles.css?v=20260404-6" />
+    <link rel="stylesheet" href="/styles.css?v=20260404-7" />
   </head>
   <body>
     <div class="app-shell">
@@ -63,8 +63,7 @@
                 <button class="preset-btn" data-seconds="240" type="button">4m</button>
                 <button class="preset-btn" data-seconds="480" type="button">8m</button>
               </div>
-              <label class="rounds-wrap" for="roundsInput"># rounds <input id="roundsInput" type="number" min="1" max="200" value="1" /></label>
-              <label class="rounds-wrap" for="customSecondsInput">custom s <input id="customSecondsInput" type="number" min="10" max="7200" step="10" value="120" aria-label="custom seconds" /></label>
+              <label class="control-wrap" for="customSecondsInput">custom s <input id="customSecondsInput" type="number" min="10" max="7200" step="10" value="120" aria-label="custom seconds" /></label>
               <label class="auto-wrap" for="autoAdvanceToggle"><input id="autoAdvanceToggle" type="checkbox" checked /> auto-next</label>
               <div class="flow-actions">
                 <button id="queueAddBtn" type="button">＋ queue</button>
@@ -232,7 +231,7 @@
         <div class="help-grid">
           <p><strong>hey artist, welcome.</strong> pick a month and tap any image to start your sketch flow.</p>
           <p>use <strong>＋ queue</strong> to collect references for this session, then move with <strong>← prev</strong> and <strong>next →</strong>.</p>
-          <p>choose <strong>◻ free</strong> for open timing, or <strong>◷ drill</strong> to practice with short focused rounds.</p>
+          <p>choose <strong>◻ free</strong> for open timing, or <strong>◷ drill</strong> to practice with short focused drills.</p>
           <p>hit <strong>start</strong>, <strong>pause</strong>, and <strong>stop</strong> as you sketch. mark done pieces in one tap.</p>
           <p>open <strong>☰ timeline</strong> anytime to review your progress and session durations.</p>
           <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, v favorite, r random, f focus, t timeline.</p>
@@ -249,6 +248,7 @@
             <p>quick sketch insights</p>
           </div>
           <div class="timeline-top-actions">
+            <button id="resetAllDashboardBtn" class="danger-btn" type="button">reset all</button>
             <button id="clearSessionsDashboardBtn" type="button">clear stats</button>
             <button id="closeDashboardBtn" type="button">close</button>
           </div>
@@ -278,6 +278,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260404-6"></script>
+    <script src="/app.js?v=20260404-7"></script>
   </body>
 </html>

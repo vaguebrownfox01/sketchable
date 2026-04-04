@@ -23,8 +23,6 @@ const state = {
   timerInterval: null,
   mode: "free",
   drillSeconds: 120,
-  drillRounds: 1,
-  drillRoundsLeft: 1,
   queue: [],
   sessions: [],
   settings: {
@@ -76,7 +74,6 @@ const elements = {
   modeButtons: Array.from(document.querySelectorAll(".mode-btn")),
   presetButtons: Array.from(document.querySelectorAll(".preset-btn")),
   customSecondsInput: document.getElementById("customSecondsInput"),
-  roundsInput: document.getElementById("roundsInput"),
   autoAdvanceToggle: document.getElementById("autoAdvanceToggle"),
   queueAddBtn: document.getElementById("queueAddBtn"),
   queuePrevBtn: document.getElementById("queuePrevBtn"),
@@ -99,6 +96,7 @@ const elements = {
   dashboardModal: document.getElementById("dashboardModal"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
   clearSessionsDashboardBtn: document.getElementById("clearSessionsDashboardBtn"),
+  resetAllDashboardBtn: document.getElementById("resetAllDashboardBtn"),
   dashTotalTime: document.getElementById("dashTotalTime"),
   dashAvgTime: document.getElementById("dashAvgTime"),
   dashLongestTime: document.getElementById("dashLongestTime"),
@@ -663,7 +661,6 @@ function renderTabs() {
 
   elements.autoAdvanceToggle.checked = Boolean(state.settings.autoAdvance);
   elements.customSecondsInput.value = String(state.drillSeconds);
-  elements.roundsInput.value = String(state.drillRounds);
 }
 
 function refreshTimerTicker() {
@@ -748,6 +745,13 @@ async function loadRemoteState() {
   state.sessions = payload.sessions || [];
   state.settings = payload.settings || state.settings;
   state.drillSeconds = Number(state.settings.defaultDrillSeconds || state.drillSeconds);
+
+  if (state.mode === "drill" && state.queue.length > 0) {
+    const selectedStillQueued = state.selectedId && state.queue.some((item) => item.imageId === state.selectedId);
+    if (!selectedStillQueued) {
+      state.selectedId = state.queue[0].imageId;
+    }
+  }
 }
 
 async function reloadData() {
@@ -795,7 +799,8 @@ async function startSketch() {
     showToast("pick from queue to start drill mode 🎯");
     return;
   }
-  await performAction((selected) => apiPost("/api/sketch/start", { imageId: selected.id }));
+  const shouldReset = state.mode === "drill";
+  await performAction((selected) => apiPost("/api/sketch/start", { imageId: selected.id, resetTimer: shouldReset }));
 }
 
 async function pauseSketch() {
@@ -828,12 +833,13 @@ async function resetSketchTimer() {
 
 async function stopSketch() {
   const selectedBeforeStop = getSelectedImage();
+  const wasAutoStop = state.isStoppingFromDrillTick;
   const result = await performAction((selected) =>
     apiPost("/api/sketch/stop", {
       imageId: selected.id,
       markSketched: true,
       mode: state.mode,
-      drillConfig: state.mode === "drill" ? { seconds: state.drillSeconds, rounds: state.drillRounds } : null,
+      drillConfig: state.mode === "drill" ? { seconds: state.drillSeconds } : null,
     })
   );
 
@@ -841,18 +847,13 @@ async function stopSketch() {
     return;
   }
 
-  if (state.mode === "drill") {
-    state.drillRoundsLeft = Math.max(1, state.drillRoundsLeft - 1);
-  }
-
-  if (state.mode === "drill" && state.isStoppingFromDrillTick && selectedBeforeStop && isImageInQueue(selectedBeforeStop.id)) {
+  if (state.mode === "drill" && wasAutoStop && selectedBeforeStop && isImageInQueue(selectedBeforeStop.id)) {
     await apiPost("/api/queue/remove", { imageId: selectedBeforeStop.id });
     await loadRemoteState();
   }
 
   if (state.settings.autoAdvance) {
-    let nextImageId = getNextImageCandidate(result.nextQueueImageId);
-
+    let nextImageId = null;
     if (state.mode === "drill") {
       nextImageId = state.queue[0]?.imageId || null;
       if (!nextImageId) {
@@ -860,12 +861,14 @@ async function stopSketch() {
         render();
         return;
       }
+    } else {
+      nextImageId = getNextImageCandidate(result.nextQueueImageId);
     }
 
     if (nextImageId) {
       state.selectedId = nextImageId;
       render();
-      if (state.mode === "drill" && state.drillRoundsLeft > 0) {
+      if (state.mode === "drill") {
         await startSketch();
       }
     }
@@ -980,6 +983,18 @@ async function clearSessionStats() {
   render();
 }
 
+async function resetAllState() {
+  const confirmed = window.confirm("this will reset all saved sketch data, queue, favorites, and history. continue?");
+  if (!confirmed) {
+    return;
+  }
+
+  await apiPost("/api/state/reset", {});
+  await reloadData();
+  state.selectedId = state.images[0]?.id || null;
+  render();
+}
+
 function closeTimelineModal() {
   elements.timelineModal.classList.add("is-hidden");
   if (elements.focusModal.classList.contains("is-hidden")) {
@@ -1074,7 +1089,6 @@ function attachEvents() {
   elements.modeButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       state.mode = btn.dataset.mode;
-      state.drillRoundsLeft = Number(elements.roundsInput.value || 1);
       render();
     });
   });
@@ -1094,12 +1108,6 @@ function attachEvents() {
     state.drillSeconds = seconds;
     await apiPost("/api/settings", { defaultDrillSeconds: seconds });
     await loadRemoteState();
-    render();
-  });
-
-  elements.roundsInput.addEventListener("change", () => {
-    state.drillRounds = Math.max(1, Number(elements.roundsInput.value || 1));
-    state.drillRoundsLeft = state.drillRounds;
     render();
   });
 
@@ -1181,6 +1189,7 @@ function attachEvents() {
 
   elements.closeDashboardBtn.addEventListener("click", closeDashboardModal);
   elements.clearSessionsDashboardBtn.addEventListener("click", clearSessionStats);
+  elements.resetAllDashboardBtn.addEventListener("click", resetAllState);
   elements.dashboardModal.addEventListener("click", (event) => {
     if (event.target && event.target.dataset.closeDashboard === "true") {
       closeDashboardModal();
@@ -1264,8 +1273,6 @@ async function init() {
   attachEvents();
   await reloadData();
   state.drillSeconds = Number(state.settings.defaultDrillSeconds || state.drillSeconds);
-  state.drillRounds = Number(elements.roundsInput.value || 1);
-  state.drillRoundsLeft = state.drillRounds;
   state.selectedId = state.images[0]?.id || null;
   render();
 }

@@ -334,7 +334,7 @@ button:active {
   border-radius: 8px;
 }
 
-.rounds-wrap,
+.control-wrap,
 .auto-wrap {
   display: inline-flex;
   align-items: center;
@@ -718,6 +718,17 @@ button:active {
 .timeline-top-actions {
   display: inline-flex;
   gap: 8px;
+}
+
+.danger-btn {
+  border: 1px solid rgba(248, 113, 113, 0.78);
+  background: linear-gradient(180deg, rgba(127, 26, 36, 0.88), rgba(93, 18, 26, 0.92));
+  color: #ffd9dd;
+}
+
+.danger-btn:hover {
+  border-color: rgba(248, 113, 113, 0.95);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.28);
 }
 
 .timer-card {
