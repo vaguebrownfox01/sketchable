@@ -118,6 +118,15 @@ function formatDuration(durationMs) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function getTimerDisplayMs(elapsedMs) {
+  const value = Number(elapsedMs || 0);
+  if (state.mode !== "drill") {
+    return value;
+  }
+  const remaining = state.drillSeconds * 1000 - value;
+  return Math.max(0, remaining);
+}
+
 function formatDateTime(isoString) {
   if (!isoString) {
     return "unknown";
@@ -303,7 +312,7 @@ function renderModalContent(image) {
   elements.modalTitle.textContent = getDisplayDate(image);
   elements.modalSubtitle.textContent = `${image.fileName} · ${image.folder}`;
   elements.modalImage.src = image.imageUrl;
-  elements.modalTimerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  elements.modalTimerDisplay.textContent = formatDuration(getTimerDisplayMs(image.timer?.elapsedMs || 0));
   const isRunning = Boolean(image.timer?.isRunning);
   elements.modalTimerDisplay.classList.toggle("is-running", isRunning);
   elements.modalTimerDisplay.classList.toggle("is-drill-running", isRunning && state.mode === "drill");
@@ -325,7 +334,7 @@ function renderViewer() {
   const queuePosition = state.queue.findIndex((item) => item.imageId === image.id);
   elements.viewerSubtitle.textContent = `${image.fileName} · ${image.folder}${queuePosition >= 0 ? ` · Queue #${queuePosition + 1}` : ""}`;
   elements.viewerImage.src = image.imageUrl;
-  elements.timerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  elements.timerDisplay.textContent = formatDuration(getTimerDisplayMs(image.timer?.elapsedMs || 0));
   const isRunning = Boolean(image.timer?.isRunning);
   elements.timerDisplay.classList.toggle("is-running", isRunning);
   elements.timerDisplay.classList.toggle("is-drill-running", isRunning && state.mode === "drill");
@@ -605,7 +614,7 @@ function refreshTimerTicker() {
     }
 
     latestSelected.timer.elapsedMs += 1000;
-    const formatted = formatDuration(latestSelected.timer.elapsedMs);
+    const formatted = formatDuration(getTimerDisplayMs(latestSelected.timer.elapsedMs));
     elements.timerDisplay.textContent = formatted;
     if (!elements.focusModal.classList.contains("is-hidden")) {
       elements.modalTimerDisplay.textContent = formatted;
