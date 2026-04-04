@@ -154,24 +154,20 @@
             <h2 id="modalTitle"></h2>
             <p id="modalSubtitle"></p>
           </div>
-          <button id="closeModalBtn" type="button">close</button>
+          <button id="closeModalBtn" type="button" aria-label="close focus view">×</button>
         </div>
 
-        <div class="timer-card focus-timer">
-          <div id="modalTimerDisplay" class="timer-display">00:00</div>
-          <div class="timer-actions">
-            <button id="modalActionBtn" class="action-btn timer-btn" type="button">▷ start</button>
-            <button id="modalPauseBtn" class="timer-btn" type="button">pause</button>
+        <div class="focus-overlay">
+          <div class="timer-card focus-timer">
+            <div id="modalTimerDisplay" class="timer-display">00:00</div>
+            <div class="timer-actions">
+              <button id="modalActionBtn" class="action-btn timer-btn" type="button">▷ start</button>
+              <button id="modalPauseBtn" class="timer-btn" type="button">pause</button>
+            </div>
           </div>
         </div>
 
-        <div class="focus-meta-actions">
-          <button id="modalFavoriteBtn" class="favorite-btn" type="button">favorite</button>
-          <button id="modalMarkBtn" type="button"></button>
-        </div>
-
         <div class="focus-image-wrap">
-          <span id="modalFavoriteStar" class="viewer-favorite-star is-hidden">★</span>
           <img id="modalImage" alt="Focused reference" />
         </div>
       </div>

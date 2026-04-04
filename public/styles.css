@@ -217,6 +217,10 @@ button:active {
 #timelineModeFilter,
 #timelineMonthFilter {
   width: 130px;
+  height: 34px;
+  min-height: 34px;
+  line-height: 1.2;
+  align-self: center;
 }
 
 .split-layout {
@@ -759,18 +763,34 @@ button:active {
 }
 
 .timeline-content {
-  grid-template-rows: auto auto 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .timeline-filters {
-  display: inline-flex;
+  display: flex;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 34px;
 }
 
 .timeline-table-wrap {
   border: 1px solid var(--border);
   border-radius: 10px;
+  min-height: 220px;
+  flex: 1 1 auto;
+  max-height: none;
   overflow: auto;
+}
+
+.timeline-table tbody {
+  vertical-align: top;
+}
+
+.timeline-table tbody td {
+  vertical-align: middle;
 }
 
 .timeline-table {
@@ -794,6 +814,7 @@ button:active {
   overflow: hidden;
   border: 1px solid rgba(125, 211, 252, 0.35);
   background: rgba(5, 9, 16, 0.8);
+  align-self: center;
 }
 
 .timeline-thumb-btn.is-favorite {
@@ -953,8 +974,25 @@ button:active {
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
   padding: 14px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 10px;
+  grid-template-rows: auto 1fr;
+  gap: 8px;
+}
+
+.focus-content.timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.focus-content.timeline-content .timeline-filters {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.focus-content.timeline-content .timeline-table-wrap {
+  flex: 1 1 auto;
+  min-height: 220px;
 }
 
 .focus-top {
@@ -980,6 +1018,30 @@ button:active {
 
 .focus-timer {
   margin: 0;
+  padding: 10px 12px;
+  background: rgba(9, 15, 24, 0.82);
+  border-color: rgba(139, 247, 197, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: auto;
+  max-width: calc(100% - 8px);
+}
+
+.focus-timer .timer-display {
+  font-size: 2.4rem;
+}
+
+.focus-timer .timer-actions {
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.focus-timer .timer-actions button {
+  padding: 8px 11px;
+  font-size: 0.86rem;
 }
 
 .focus-image-wrap {
@@ -987,7 +1049,7 @@ button:active {
   min-height: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 8px;
+  padding: 6px;
   background: #030811;
 }
 
@@ -995,6 +1057,43 @@ button:active {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.focus-overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.focus-overlay .timer-card {
+  pointer-events: auto;
+}
+
+#focusModal .focus-top {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  margin: 0;
+}
+
+#focusModal .focus-top > div {
+  display: none;
+}
+
+#focusModal #closeModalBtn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  line-height: 1;
+  background: rgba(8, 14, 24, 0.78);
+  border: 1px solid rgba(168, 181, 209, 0.5);
+  color: #dbe8ff;
 }
 
 .viewer-favorite-star {
@@ -1049,6 +1148,23 @@ button:active {
   .split-layout {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .focus-content {
+    width: calc(100vw - 12px);
+    height: calc(100vh - 16px);
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .focus-overlay {
+    justify-content: center;
+    margin-bottom: 2px;
+  }
+
+  .focus-timer {
+    width: auto;
+    max-width: 100%;
   }
 
   .dashboard-cards {

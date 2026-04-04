@@ -64,12 +64,9 @@ const elements = {
   modalTitle: document.getElementById("modalTitle"),
   modalSubtitle: document.getElementById("modalSubtitle"),
   modalImage: document.getElementById("modalImage"),
-  modalFavoriteStar: document.getElementById("modalFavoriteStar"),
   modalTimerDisplay: document.getElementById("modalTimerDisplay"),
   modalActionBtn: document.getElementById("modalActionBtn"),
   modalPauseBtn: document.getElementById("modalPauseBtn"),
-  modalFavoriteBtn: document.getElementById("modalFavoriteBtn"),
-  modalMarkBtn: document.getElementById("modalMarkBtn"),
   modeButtons: Array.from(document.querySelectorAll(".mode-btn")),
   presetButtons: Array.from(document.querySelectorAll(".preset-btn")),
   customSecondsInput: document.getElementById("customSecondsInput"),
@@ -241,7 +238,41 @@ function renderGallery() {
         ? `done: ${formatDateTime(image.sketchedAt)} · ${formatDuration(image.durationMs)}`
         : "";
 
+    let pressTimer = null;
+    let longPressed = false;
+
+    const clearPressTimer = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    };
+
+    button.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) {
+        return;
+      }
+
+      longPressed = false;
+      clearPressTimer();
+      pressTimer = setTimeout(() => {
+        longPressed = true;
+        state.selectedId = image.id;
+        render();
+        openFocusModal();
+      }, 450);
+    });
+
+    button.addEventListener("pointerup", clearPressTimer);
+    button.addEventListener("pointerleave", clearPressTimer);
+    button.addEventListener("pointercancel", clearPressTimer);
+
     button.addEventListener("click", () => {
+      if (longPressed) {
+        longPressed = false;
+        return;
+      }
+
       state.selectedId = image.id;
       render();
     });
@@ -269,10 +300,6 @@ function renderModalContent(image) {
   elements.modalTimerDisplay.classList.toggle("is-running", isRunning);
   elements.modalActionBtn.textContent = isRunning ? "■ stop" : "▷ start";
   elements.modalActionBtn.classList.toggle("is-stop", isRunning);
-  elements.modalFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
-  elements.modalFavoriteBtn.textContent = image.isFavorite ? "★ favorite" : "☆ favorite";
-  elements.modalFavoriteBtn.classList.toggle("is-on", image.isFavorite);
-  elements.modalMarkBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 }
 
 function renderViewer() {
@@ -916,8 +943,6 @@ function attachEvents() {
   elements.modalActionBtn.addEventListener("click", actionPrimary);
   elements.modalPauseBtn.addEventListener("click", pauseSketch);
   elements.favoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
-  elements.modalFavoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
-  elements.modalMarkBtn.addEventListener("click", toggleSelectedSketchStatus);
 
   elements.randomBtn.addEventListener("click", chooseRandomImage);
 
