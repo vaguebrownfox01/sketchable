@@ -599,6 +599,11 @@ button:active {
   text-shadow: 0 0 10px rgba(139, 247, 197, 0.48), 0 0 18px rgba(56, 189, 248, 0.25);
 }
 
+.timer-display.is-drill-running {
+  color: #ff8a8a;
+  text-shadow: 0 0 10px rgba(248, 113, 113, 0.55), 0 0 20px rgba(248, 113, 113, 0.35);
+}
+
 .timer-actions {
   display: flex;
   gap: 8px;

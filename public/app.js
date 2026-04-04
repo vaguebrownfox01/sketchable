@@ -144,6 +144,14 @@ function isImageInQueue(imageId) {
   return state.queue.some((item) => item.imageId === imageId);
 }
 
+function isSelectedInQueue() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return false;
+  }
+  return isImageInQueue(selected.id);
+}
+
 function inSelectedRange(image) {
   if (state.activeRange === "all") {
     return true;
@@ -298,6 +306,7 @@ function renderModalContent(image) {
   elements.modalTimerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
   const isRunning = Boolean(image.timer?.isRunning);
   elements.modalTimerDisplay.classList.toggle("is-running", isRunning);
+  elements.modalTimerDisplay.classList.toggle("is-drill-running", isRunning && state.mode === "drill");
   elements.modalActionBtn.textContent = isRunning ? "■ stop" : "▷ start";
   elements.modalActionBtn.classList.toggle("is-stop", isRunning);
 }
@@ -319,6 +328,7 @@ function renderViewer() {
   elements.timerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
   const isRunning = Boolean(image.timer?.isRunning);
   elements.timerDisplay.classList.toggle("is-running", isRunning);
+  elements.timerDisplay.classList.toggle("is-drill-running", isRunning && state.mode === "drill");
   elements.actionBtn.textContent = isRunning ? "■ stop" : "▷ start";
   elements.actionBtn.classList.toggle("is-stop", isRunning);
   elements.viewerFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
@@ -695,6 +705,10 @@ function getNextImageCandidate(serverNextId) {
 }
 
 async function startSketch() {
+  if (state.mode === "drill" && !isSelectedInQueue()) {
+    elements.historyMeta.textContent = "drill mode uses queue only. add this image to queue first.";
+    return;
+  }
   await performAction((selected) => apiPost("/api/sketch/start", { imageId: selected.id }));
 }
 
@@ -703,6 +717,7 @@ async function pauseSketch() {
 }
 
 async function stopSketch() {
+  const selectedBeforeStop = getSelectedImage();
   const result = await performAction((selected) =>
     apiPost("/api/sketch/stop", {
       imageId: selected.id,
@@ -720,8 +735,23 @@ async function stopSketch() {
     state.drillRoundsLeft = Math.max(1, state.drillRoundsLeft - 1);
   }
 
+  if (state.mode === "drill" && state.isStoppingFromDrillTick && selectedBeforeStop && isImageInQueue(selectedBeforeStop.id)) {
+    await apiPost("/api/queue/remove", { imageId: selectedBeforeStop.id });
+    await loadRemoteState();
+  }
+
   if (state.settings.autoAdvance) {
-    const nextImageId = getNextImageCandidate(result.nextQueueImageId);
+    let nextImageId = getNextImageCandidate(result.nextQueueImageId);
+
+    if (state.mode === "drill") {
+      nextImageId = state.queue[0]?.imageId || null;
+      if (!nextImageId) {
+        elements.historyMeta.textContent = "queue finished. drill stopped.";
+        render();
+        return;
+      }
+    }
+
     if (nextImageId) {
       state.selectedId = nextImageId;
       render();
