@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>sketchable</title>
-    <link rel="stylesheet" href="/styles.css?v=20260404-5" />
+    <link rel="stylesheet" href="/styles.css?v=20260404-6" />
   </head>
   <body>
     <div class="app-shell">
@@ -120,7 +120,7 @@
             </div>
 
             <div class="timer-card">
-              <div id="timerDisplay" class="timer-display">00:00</div>
+              <div id="timerDisplay" class="timer-display" role="button" tabindex="0" title="tap to reset timer">00:00</div>
               <div class="timer-actions">
                 <button id="actionBtn" class="action-btn timer-btn" type="button">▷ start</button>
                 <button id="pauseBtn" class="timer-btn" type="button">pause</button>
@@ -169,7 +169,7 @@
 
         <div class="focus-overlay">
           <div class="timer-card focus-timer">
-            <div id="modalTimerDisplay" class="timer-display">00:00</div>
+            <div id="modalTimerDisplay" class="timer-display" role="button" tabindex="0" title="tap to reset timer">00:00</div>
             <div class="timer-actions">
               <button id="modalActionBtn" class="action-btn timer-btn" type="button">▷ start</button>
               <button id="modalPauseBtn" class="timer-btn" type="button">pause</button>
@@ -278,6 +278,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260404-5"></script>
+    <script src="/app.js?v=20260404-6"></script>
   </body>
 </html>

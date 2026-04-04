@@ -246,6 +246,38 @@ function ensureSelection() {
   state.selectedId = state.filtered[0]?.id || null;
 }
 
+function syncGalleryActiveState() {
+  const cards = elements.galleryGrid.querySelectorAll(".image-card");
+  cards.forEach((card) => {
+    card.classList.toggle("is-active", card.dataset.imageId === state.selectedId);
+  });
+}
+
+function renderSelectionOnly() {
+  syncGalleryActiveState();
+  renderViewer();
+  renderQueue();
+  renderDashboard();
+  refreshTimerTicker();
+}
+
+function attachTimerResetHandlers(element) {
+  if (!element) {
+    return;
+  }
+  element.addEventListener("click", resetSketchTimer);
+  element.addEventListener("touchend", (event) => {
+    event.preventDefault();
+    resetSketchTimer();
+  }, { passive: false });
+  element.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      resetSketchTimer();
+    }
+  });
+}
+
 function renderGallery() {
   elements.galleryGrid.innerHTML = "";
 
@@ -302,7 +334,7 @@ function renderGallery() {
       pressTimer = setTimeout(() => {
         longPressed = true;
         state.selectedId = image.id;
-        render();
+        renderSelectionOnly();
         openFocusModal();
       }, 450);
     });
@@ -326,13 +358,13 @@ function renderGallery() {
         state.lastTapImageId = null;
         state.lastTapAt = 0;
         state.selectedId = image.id;
-        render();
+        renderSelectionOnly();
         openFocusModal();
         return;
       }
 
       state.selectedId = image.id;
-      render();
+      renderSelectionOnly();
     });
 
     elements.galleryGrid.appendChild(fragment);
@@ -434,7 +466,7 @@ function renderQueue() {
 
     selectBtn.addEventListener("click", () => {
       state.selectedId = image.id;
-      render();
+      renderSelectionOnly();
     });
 
     const upBtn = document.createElement("button");
@@ -501,7 +533,7 @@ function renderTimeline() {
       thumbBtn.addEventListener("click", () => {
         state.selectedId = session.imageId;
         closeTimelineModal();
-        render();
+        renderSelectionOnly();
       });
     }
   });
@@ -770,6 +802,30 @@ async function pauseSketch() {
   await performAction((selected) => apiPost("/api/sketch/pause", { imageId: selected.id }));
 }
 
+async function resetSketchTimer() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
+  }
+
+  await apiPost("/api/sketch/reset", { imageId: selected.id });
+  await reloadData();
+
+  const stillExists = state.images.some((item) => item.id === selected.id);
+  state.selectedId = stillExists ? selected.id : state.images[0]?.id || null;
+
+  if (state.activeTab === "sketched") {
+    applyFilters();
+    ensureSelection();
+    renderTabs();
+    renderGallery();
+    renderSelectionOnly();
+    return;
+  }
+
+  renderSelectionOnly();
+}
+
 async function stopSketch() {
   const selectedBeforeStop = getSelectedImage();
   const result = await performAction((selected) =>
@@ -848,7 +904,7 @@ function chooseRandomImage() {
   elements.randomBtn.classList.remove("is-animated");
   void elements.randomBtn.offsetWidth;
   elements.randomBtn.classList.add("is-animated");
-  render();
+  renderSelectionOnly();
 
   const activeCard = elements.galleryGrid.querySelector(`.image-card[data-image-id="${next.id}"]`);
   if (activeCard) {
@@ -948,7 +1004,7 @@ async function queueMove(direction) {
   const result = await apiPost(endpoint, { currentImageId: selected.id });
   if (result.imageId) {
     state.selectedId = result.imageId;
-    render();
+    renderSelectionOnly();
   }
 }
 
@@ -1055,10 +1111,12 @@ function attachEvents() {
 
   elements.actionBtn.addEventListener("click", actionPrimary);
   elements.pauseBtn.addEventListener("click", pauseSketch);
+  attachTimerResetHandlers(elements.timerDisplay);
   elements.markBtn.addEventListener("click", toggleSelectedSketchStatus);
 
   elements.modalActionBtn.addEventListener("click", actionPrimary);
   elements.modalPauseBtn.addEventListener("click", pauseSketch);
+  attachTimerResetHandlers(elements.modalTimerDisplay);
   elements.favoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
 
   elements.randomBtn.addEventListener("click", chooseRandomImage);

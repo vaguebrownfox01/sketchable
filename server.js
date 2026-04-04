@@ -428,6 +428,31 @@ app.post("/api/sketch/pause", async (req, res) => {
   }
 });
 
+app.post("/api/sketch/reset", async (req, res) => {
+  try {
+    const images = await indexImages();
+    const imagesById = new Map(images.map((item) => [item.id, item]));
+    const imageId = req.body?.imageId;
+    const validation = validateImage(imagesById, imageId);
+    if (!validation.ok) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const state = await loadState();
+    const record = withRecordDefaults(state.images[imageId]);
+    record.timer = { isRunning: false, runningSince: null, elapsedMs: 0 };
+    record.isSketched = false;
+    record.sketchedAt = null;
+    record.durationMs = 0;
+    state.images[imageId] = record;
+    await saveState(state);
+
+    return res.json({ ok: true, timer: { isRunning: false, elapsedMs: 0 } });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to reset timer", detail: error.message });
+  }
+});
+
 app.post("/api/sketch/stop", async (req, res) => {
   try {
     const images = await indexImages();

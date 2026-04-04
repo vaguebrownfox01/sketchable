@@ -85,3 +85,5 @@ pm2 save
 - supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`.
 - excluded folders include `cwooks`, `node_modules`, `public`, `data`, and `.git`.
 - state schema includes settings, queue, sessions, and per-image records.
+
+> opencode -s ses_2a7b327b7ffegnVySESOny1zCW

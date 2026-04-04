@@ -740,6 +740,7 @@ button:active {
   color: #bde6ff;
   transition: color 180ms ease, text-shadow 220ms ease;
   text-align: center;
+  cursor: pointer;
 }
 
 .timer-display.is-running {
@@ -764,6 +765,7 @@ button:active {
   border: 1px solid rgba(139, 247, 197, 0.4);
   background: rgba(12, 31, 26, 0.55);
 }
+
 
 .timer-btn:hover {
   border-color: rgba(139, 247, 197, 0.8);
