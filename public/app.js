@@ -790,6 +790,21 @@ function getNextImageCandidate(serverNextId) {
 }
 
 async function startSketch() {
+  if (state.mode === "drill") {
+    const imageById = new Map(state.images.map((image) => [image.id, image]));
+    const completedQueueIds = state.queue
+      .filter((item) => imageById.get(item.imageId)?.isSketched)
+      .map((item) => item.imageId);
+
+    if (completedQueueIds.length) {
+      for (const imageId of completedQueueIds) {
+        await apiPost("/api/queue/remove", { imageId });
+      }
+      await loadRemoteState();
+      renderQueue();
+    }
+  }
+
   if (state.mode === "drill" && state.queue.length === 0) {
     showToast("your queue is empty - add a few images and let the drill begin ✨");
     return;
@@ -848,6 +863,16 @@ async function stopSketch() {
   }
 
   if (state.mode === "drill" && wasAutoStop && selectedBeforeStop && isImageInQueue(selectedBeforeStop.id)) {
+    await apiPost("/api/queue/remove", { imageId: selectedBeforeStop.id });
+    await loadRemoteState();
+  }
+
+  if (
+    result.isSketched &&
+    selectedBeforeStop &&
+    isImageInQueue(selectedBeforeStop.id) &&
+    !(state.mode === "drill" && wasAutoStop)
+  ) {
     await apiPost("/api/queue/remove", { imageId: selectedBeforeStop.id });
     await loadRemoteState();
   }
