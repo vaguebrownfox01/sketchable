@@ -88,7 +88,7 @@
           </div>
         </aside>
 
-        <section class="gallery-panel">
+        <section id="galleryPanel" class="gallery-panel">
           <div id="galleryCount" class="panel-meta"></div>
           <div id="galleryGrid" class="gallery-grid"></div>
           <div class="gallery-footer">
@@ -96,7 +96,7 @@
           </div>
         </section>
         <div id="resizeHandle" class="resize-handle" aria-hidden="true"></div>
-        <section class="viewer-panel">
+        <section id="viewerPanel" class="viewer-panel">
           <div id="emptyViewer" class="empty-viewer">
             <h2>no image selected</h2>
             <p>pick an image from the gallery to begin.</p>
@@ -136,6 +136,11 @@
           </div>
         </section>
       </main>
+
+      <div class="mobile-fab" aria-hidden="false">
+        <button id="jumpFabBtn" class="fab-btn" type="button" title="jump to viewer">⇅</button>
+        <button id="queueFabBtn" class="fab-btn" type="button" title="toggle queue">＋</button>
+      </div>
     </div>
 
     <template id="cardTemplate">

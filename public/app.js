@@ -44,6 +44,10 @@ const elements = {
   rangeTabs: Array.from(document.querySelectorAll(".range-tab")),
   randomBtn: document.getElementById("randomBtn"),
   galleryCount: document.getElementById("galleryCount"),
+  galleryPanel: document.getElementById("galleryPanel"),
+  viewerPanel: document.getElementById("viewerPanel"),
+  jumpFabBtn: document.getElementById("jumpFabBtn"),
+  queueFabBtn: document.getElementById("queueFabBtn"),
   galleryGrid: document.getElementById("galleryGrid"),
   cardTemplate: document.getElementById("cardTemplate"),
   emptyViewer: document.getElementById("emptyViewer"),
@@ -380,6 +384,7 @@ function renderViewer() {
   elements.viewerFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
   elements.favoriteBtn.textContent = image.isFavorite ? "★ favorite" : "☆ favorite";
   elements.favoriteBtn.classList.toggle("is-on", image.isFavorite);
+  elements.queueFabBtn.textContent = isImageInQueue(image.id) ? "−" : "＋";
   elements.markBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 
   if (image.isSketched) {
@@ -957,6 +962,39 @@ async function addSelectedToQueue() {
   render();
 }
 
+async function toggleSelectedQueueStatus() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
+  }
+
+  if (isImageInQueue(selected.id)) {
+    await apiPost("/api/queue/remove", { imageId: selected.id });
+  } else {
+    await apiPost("/api/queue/add", { imageId: selected.id });
+  }
+
+  await loadRemoteState();
+  render();
+}
+
+function isViewerMostlyVisible() {
+  const rect = elements.viewerPanel.getBoundingClientRect();
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  const visibleTop = Math.max(0, rect.top);
+  const visibleBottom = Math.min(viewportHeight, rect.bottom);
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+  return visibleHeight > rect.height * 0.45;
+}
+
+function jumpBetweenPanels() {
+  if (isViewerMostlyVisible()) {
+    elements.galleryPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    elements.viewerPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 function attachEvents() {
   elements.searchInput.addEventListener("input", (event) => {
     state.query = event.target.value || "";
@@ -1026,6 +1064,8 @@ function attachEvents() {
   elements.randomBtn.addEventListener("click", chooseRandomImage);
 
   elements.queueAddBtn.addEventListener("click", addSelectedToQueue);
+  elements.queueFabBtn.addEventListener("click", toggleSelectedQueueStatus);
+  elements.jumpFabBtn.addEventListener("click", jumpBetweenPanels);
 
   elements.queueRemoveBtn.addEventListener("click", async () => {
     const selected = getSelectedImage();
