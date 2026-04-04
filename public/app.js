@@ -34,6 +34,8 @@ const state = {
   timelineMode: "all",
   timelineMonth: "all",
   isStoppingFromDrillTick: false,
+  lastTapImageId: null,
+  lastTapAt: 0,
 };
 
 const elements = {
@@ -308,6 +310,20 @@ function renderGallery() {
     button.addEventListener("click", () => {
       if (longPressed) {
         longPressed = false;
+        return;
+      }
+
+      const now = Date.now();
+      const isDoubleTap = state.lastTapImageId === image.id && now - state.lastTapAt < 320;
+      state.lastTapImageId = image.id;
+      state.lastTapAt = now;
+
+      if (isDoubleTap) {
+        state.lastTapImageId = null;
+        state.lastTapAt = 0;
+        state.selectedId = image.id;
+        render();
+        openFocusModal();
         return;
       }
 

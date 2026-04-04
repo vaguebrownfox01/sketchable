@@ -447,6 +447,9 @@ button:active {
 .random-btn {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  flex: 0 0 40px;
   padding: 0;
   border-radius: 50%;
   display: grid;
@@ -1312,6 +1315,7 @@ button:active {
   .utility-row {
     grid-template-columns: 1fr;
     justify-items: stretch;
+    gap: 8px;
   }
 
   .tab-group,
@@ -1321,7 +1325,13 @@ button:active {
   }
 
   .core-tabs {
-    justify-content: flex-start;
+    justify-content: center;
+    row-gap: 6px;
+  }
+
+  .quick-actions {
+    justify-content: center;
+    row-gap: 6px;
   }
 
   .focus-divider {
@@ -1401,5 +1411,10 @@ button:active {
 
   .viewer-panel {
     min-height: 420px;
+  }
+
+  .viewer-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }
