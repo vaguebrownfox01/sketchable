@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sketchable</title>
+    <title>sketchable</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -11,46 +11,92 @@
       <header class="topbar">
         <div class="utility-row">
           <div class="search-wrap">
-            <input id="searchInput" type="search" placeholder="Search references" />
+            <input id="searchInput" type="search" placeholder="search references" />
           </div>
           <div class="tab-group">
-            <button class="tab is-active" data-tab="available" type="button">Available</button>
-            <button class="tab" data-tab="sketched" type="button">Sketched</button>
-            <button id="randomBtn" class="random-btn" type="button" aria-label="Pick random image" title="Random image">
+            <button class="tab is-active" data-tab="available" type="button">available</button>
+            <button class="tab" data-tab="sketched" type="button">sketched</button>
+            <button id="helpBtn" class="help-btn" type="button" aria-label="how to use sketchable" title="how to use">?</button>
+            <button id="randomBtn" class="random-btn" type="button" aria-label="pick random image" title="random image">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M7 5h4v2H7c-1.3 0-2.5.6-3.2 1.7L2 11l1.8 1.3L5.6 10c.4-.6 1.1-1 1.8-1zm10 0h5v5h-2V8.4l-4.4 4.4-1.4-1.4L18.6 7H17zm-7 12h4c.7 0 1.4-.4 1.8-1l1.8-2.3L20 15l-1.8 2.3c-.8 1.1-1.9 1.7-3.2 1.7h-4zm8.6-6l1.4 1.4L15.6 17H17v2h-5v-5h2v1.6z" />
               </svg>
             </button>
           </div>
         </div>
-        <div class="range-group" id="rangeGroup">
-          <button class="range-tab is-active" data-range="all" data-label="All" type="button">All</button>
-          <button class="range-tab" data-range="jan" data-label="Jan" type="button">Jan</button>
-          <button class="range-tab" data-range="feb" data-label="Feb" type="button">Feb</button>
-          <button class="range-tab" data-range="mar" data-label="Mar" type="button">Mar</button>
-          <button class="range-tab" data-range="apr" data-label="Apr" type="button">Apr</button>
-          <button class="range-tab" data-range="may" data-label="May" type="button">May</button>
-          <button class="range-tab" data-range="jun" data-label="Jun" type="button">Jun</button>
-          <button class="range-tab" data-range="jul" data-label="Jul" type="button">Jul</button>
-          <button class="range-tab" data-range="aug" data-label="Aug" type="button">Aug</button>
-          <button class="range-tab" data-range="sep" data-label="Sep" type="button">Sep</button>
-          <button class="range-tab" data-range="oct" data-label="Oct" type="button">Oct</button>
-          <button class="range-tab" data-range="nov" data-label="Nov" type="button">Nov</button>
-          <button class="range-tab" data-range="dec" data-label="Dec" type="button">Dec</button>
-          <button class="range-tab" data-range="undated" data-label="Undated" type="button">Undated</button>
-        </div>
       </header>
 
+      <section class="month-panel">
+        <div class="range-group" id="rangeGroup">
+          <button class="range-tab is-active" data-range="all" data-label="all" type="button">all</button>
+          <button class="range-tab" data-range="jan" data-label="jan" type="button">jan</button>
+          <button class="range-tab" data-range="feb" data-label="feb" type="button">feb</button>
+          <button class="range-tab" data-range="mar" data-label="mar" type="button">mar</button>
+          <button class="range-tab" data-range="apr" data-label="apr" type="button">apr</button>
+          <button class="range-tab" data-range="may" data-label="may" type="button">may</button>
+          <button class="range-tab" data-range="jun" data-label="jun" type="button">jun</button>
+          <button class="range-tab" data-range="jul" data-label="jul" type="button">jul</button>
+          <button class="range-tab" data-range="aug" data-label="aug" type="button">aug</button>
+          <button class="range-tab" data-range="sep" data-label="sep" type="button">sep</button>
+          <button class="range-tab" data-range="oct" data-label="oct" type="button">oct</button>
+          <button class="range-tab" data-range="nov" data-label="nov" type="button">nov</button>
+          <button class="range-tab" data-range="dec" data-label="dec" type="button">dec</button>
+          <button class="range-tab" data-range="undated" data-label="undated" type="button">undated</button>
+        </div>
+      </section>
+
       <main id="splitLayout" class="split-layout">
+        <aside class="v2-sidebar">
+          <div class="practice-card">
+            <h3>practice</h3>
+            <div class="practice-bar">
+              <div class="mode-group">
+                <button class="mode-btn is-active" data-mode="free" type="button">◻ free</button>
+                <button class="mode-btn" data-mode="drill" type="button">◷ drill</button>
+              </div>
+              <div class="drill-presets">
+                <button class="preset-btn" data-seconds="45" type="button">45s</button>
+                <button class="preset-btn" data-seconds="90" type="button">1m30</button>
+                <button class="preset-btn" data-seconds="240" type="button">4m</button>
+                <button class="preset-btn" data-seconds="480" type="button">8m</button>
+              </div>
+              <label class="rounds-wrap" for="roundsInput"># rounds <input id="roundsInput" type="number" min="1" max="200" value="1" /></label>
+              <label class="rounds-wrap" for="customSecondsInput">custom s <input id="customSecondsInput" type="number" min="10" max="7200" step="10" value="120" aria-label="custom seconds" /></label>
+              <label class="auto-wrap" for="autoAdvanceToggle"><input id="autoAdvanceToggle" type="checkbox" checked /> auto-next</label>
+              <div class="flow-actions">
+                <button id="queueAddBtn" type="button">＋ queue</button>
+                <button id="queuePrevBtn" type="button">← prev</button>
+                <button id="queueNextBtn" type="button">next →</button>
+                <button id="timelineBtn" type="button">☰ timeline</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="queue-card">
+            <div class="queue-head">
+              <strong>queue</strong>
+              <div class="queue-actions">
+                <button id="queueRemoveBtn" type="button">remove</button>
+                <button id="queueClearBtn" type="button">clear</button>
+              </div>
+            </div>
+            <div id="queueCount" class="queue-count"></div>
+            <div id="queueList" class="queue-list"></div>
+          </div>
+        </aside>
+
         <section class="gallery-panel">
           <div id="galleryCount" class="panel-meta"></div>
           <div id="galleryGrid" class="gallery-grid"></div>
+          <div class="gallery-footer">
+            <button id="loadMoreBtn" class="load-more-btn is-hidden" type="button">load more</button>
+          </div>
         </section>
         <div id="resizeHandle" class="resize-handle" aria-hidden="true"></div>
         <section class="viewer-panel">
           <div id="emptyViewer" class="empty-viewer">
-            <h2>No image selected</h2>
-            <p>Pick an image from the gallery to begin.</p>
+            <h2>no image selected</h2>
+            <p>pick an image from the gallery to begin.</p>
           </div>
 
           <div id="viewerContent" class="viewer-content is-hidden">
@@ -60,7 +106,7 @@
                 <p id="viewerSubtitle"></p>
               </div>
               <div class="viewer-actions">
-                <button id="focusBtn" type="button">Focus View</button>
+                <button id="focusBtn" type="button">focus view</button>
                 <button id="markBtn" type="button"></button>
               </div>
             </div>
@@ -68,9 +114,9 @@
             <div class="timer-card">
               <div id="timerDisplay" class="timer-display">00:00</div>
               <div class="timer-actions">
-                <button id="startBtn" type="button">Start</button>
-                <button id="pauseBtn" type="button">Pause</button>
-                <button id="stopBtn" type="button">Stop</button>
+                <button id="startBtn" type="button">start</button>
+                <button id="pauseBtn" type="button">pause</button>
+                <button id="stopBtn" type="button">stop</button>
               </div>
             </div>
 
@@ -105,21 +151,75 @@
             <h2 id="modalTitle"></h2>
             <p id="modalSubtitle"></p>
           </div>
-          <button id="closeModalBtn" type="button">Close</button>
+          <button id="closeModalBtn" type="button">close</button>
         </div>
 
         <div class="timer-card focus-timer">
           <div id="modalTimerDisplay" class="timer-display">00:00</div>
           <div class="timer-actions">
-            <button id="modalStartBtn" type="button">Start</button>
-            <button id="modalPauseBtn" type="button">Pause</button>
-            <button id="modalStopBtn" type="button">Stop</button>
+            <button id="modalStartBtn" type="button">start</button>
+            <button id="modalPauseBtn" type="button">pause</button>
+            <button id="modalStopBtn" type="button">stop</button>
             <button id="modalMarkBtn" type="button"></button>
           </div>
         </div>
 
         <div class="focus-image-wrap">
           <img id="modalImage" alt="Focused reference" />
+        </div>
+      </div>
+    </div>
+
+    <div id="timelineModal" class="focus-modal is-hidden" role="dialog" aria-modal="true" aria-label="Sketch timeline">
+      <div class="focus-backdrop" data-close-timeline="true"></div>
+      <div class="focus-content timeline-content">
+        <div class="focus-top">
+          <div>
+            <h2>timeline</h2>
+            <p>all sketch sessions</p>
+          </div>
+          <button id="closeTimelineBtn" type="button">close</button>
+        </div>
+        <div class="timeline-filters">
+          <select id="timelineModeFilter">
+            <option value="all">all modes</option>
+            <option value="free">free</option>
+            <option value="drill">drill</option>
+          </select>
+          <select id="timelineMonthFilter">
+            <option value="all">all months</option>
+            <option value="1">jan</option><option value="2">feb</option><option value="3">mar</option>
+            <option value="4">apr</option><option value="5">may</option><option value="6">jun</option>
+            <option value="7">jul</option><option value="8">aug</option><option value="9">sep</option>
+            <option value="10">oct</option><option value="11">nov</option><option value="12">dec</option>
+          </select>
+        </div>
+        <div class="timeline-table-wrap">
+          <table class="timeline-table">
+            <thead><tr><th>completed</th><th>image date</th><th>duration</th><th>mode</th><th>image</th></tr></thead>
+            <tbody id="timelineBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="helpModal" class="focus-modal is-hidden" role="dialog" aria-modal="true" aria-label="How to use Sketchable">
+      <div class="focus-backdrop" data-close-help="true"></div>
+      <div class="focus-content help-content">
+        <div class="focus-top">
+          <div>
+            <h2>how to use sketchable</h2>
+            <p>quick guide for your sketch sessions</p>
+          </div>
+          <button id="closeHelpBtn" type="button">close</button>
+        </div>
+        <div class="help-grid">
+          <p><strong>hey artist, welcome.</strong> pick a month and tap any image to start your sketch flow.</p>
+          <p>use <strong>＋ queue</strong> to collect references for this session, then move with <strong>← prev</strong> and <strong>next →</strong>.</p>
+          <p>choose <strong>◻ free</strong> for open timing, or <strong>◷ drill</strong> to practice with short focused rounds.</p>
+          <p>hit <strong>start</strong>, <strong>pause</strong>, and <strong>stop</strong> as you sketch. mark done pieces in one tap.</p>
+          <p>open <strong>☰ timeline</strong> anytime to review your progress and session durations.</p>
+          <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, r random, f focus, t timeline.</p>
         </div>
       </div>
     </div>

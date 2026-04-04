@@ -15,10 +15,20 @@ const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic"]);
 const EXCLUDED_DIRS = new Set(["node_modules", "public", "data", ".git", "cwooks"]);
 const FILENAME_DATE_REGEX = /^IMG_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/i;
 
+const DEFAULT_SETTINGS = {
+  autoAdvance: true,
+  soundEnabled: false,
+  defaultDrillSeconds: 120,
+};
+
 app.use(express.json());
 
 function createImageId(relativePath) {
   return crypto.createHash("sha1").update(relativePath).digest("hex").slice(0, 16);
+}
+
+function createSessionId() {
+  return crypto.randomBytes(8).toString("hex");
 }
 
 function toIsoLocalFromParts(parts) {
@@ -100,18 +110,35 @@ async function indexImages() {
   return images;
 }
 
+function normalizeState(raw) {
+  const base = raw && typeof raw === "object" ? raw : {};
+  return {
+    schemaVersion: 2,
+    settings: {
+      ...DEFAULT_SETTINGS,
+      ...(base.settings && typeof base.settings === "object" ? base.settings : {}),
+    },
+    queue: Array.isArray(base.queue) ? base.queue : [],
+    sessions: Array.isArray(base.sessions) ? base.sessions : [],
+    imageMeta: base.imageMeta && typeof base.imageMeta === "object" ? base.imageMeta : {},
+    images: base.images && typeof base.images === "object" ? base.images : {},
+  };
+}
+
 async function loadState() {
   try {
     const raw = await fs.readFile(STATE_FILE, "utf8");
     const parsed = JSON.parse(raw);
-    return {
-      images: parsed.images && typeof parsed.images === "object" ? parsed.images : {},
-    };
+    const normalized = normalizeState(parsed);
+    if (parsed.schemaVersion !== 2) {
+      await saveState(normalized);
+    }
+    return normalized;
   } catch (error) {
     if (error.code !== "ENOENT") {
       throw error;
     }
-    return { images: {} };
+    return normalizeState({});
   }
 }
 
@@ -176,6 +203,38 @@ function validateImage(imagesById, imageId) {
   return { ok: true };
 }
 
+function pushSession({ state, image, imageId, durationMs, stoppedAt, mode, drillConfig }) {
+  state.sessions.push({
+    id: createSessionId(),
+    imageId,
+    imageFileName: image.fileName,
+    imageDateTime: image.parsedDate?.isoDateTime || null,
+    stoppedAt,
+    durationMs,
+    mode,
+    drillConfig: drillConfig || null,
+  });
+}
+
+function getQueueImageIds(state) {
+  return state.queue.map((item) => item.imageId);
+}
+
+function findNeighborQueueImageId(state, currentId, direction = 1) {
+  const queueIds = getQueueImageIds(state);
+  if (!queueIds.length) {
+    return null;
+  }
+
+  const index = queueIds.indexOf(currentId);
+  if (index === -1) {
+    return queueIds[0];
+  }
+
+  const nextIndex = (index + direction + queueIds.length) % queueIds.length;
+  return queueIds[nextIndex];
+}
+
 app.get("/api/images", async (_req, res) => {
   try {
     const [images, state] = await Promise.all([indexImages(), loadState()]);
@@ -183,6 +242,126 @@ app.get("/api/images", async (_req, res) => {
     res.json({ images: enriched });
   } catch (error) {
     res.status(500).json({ error: "Failed to load images", detail: error.message });
+  }
+});
+
+app.get("/api/state", async (_req, res) => {
+  try {
+    const state = await loadState();
+    res.json({
+      schemaVersion: state.schemaVersion,
+      settings: state.settings,
+      queue: state.queue,
+      sessions: state.sessions,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load state", detail: error.message });
+  }
+});
+
+app.post("/api/settings", async (req, res) => {
+  try {
+    const state = await loadState();
+    state.settings = {
+      ...state.settings,
+      ...req.body,
+    };
+    await saveState(state);
+    res.json({ ok: true, settings: state.settings });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update settings", detail: error.message });
+  }
+});
+
+app.get("/api/queue", async (_req, res) => {
+  try {
+    const state = await loadState();
+    res.json({ queue: state.queue });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load queue", detail: error.message });
+  }
+});
+
+app.post("/api/queue/add", async (req, res) => {
+  try {
+    const images = await indexImages();
+    const imagesById = new Map(images.map((item) => [item.id, item]));
+    const imageId = req.body?.imageId;
+    const validation = validateImage(imagesById, imageId);
+    if (!validation.ok) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const state = await loadState();
+    if (!state.queue.some((item) => item.imageId === imageId)) {
+      state.queue.push({ imageId, addedAt: new Date().toISOString() });
+      await saveState(state);
+    }
+    return res.json({ ok: true, queue: state.queue });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to add queue item", detail: error.message });
+  }
+});
+
+app.post("/api/queue/remove", async (req, res) => {
+  try {
+    const imageId = req.body?.imageId;
+    const state = await loadState();
+    state.queue = state.queue.filter((item) => item.imageId !== imageId);
+    await saveState(state);
+    return res.json({ ok: true, queue: state.queue });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to remove queue item", detail: error.message });
+  }
+});
+
+app.post("/api/queue/clear", async (_req, res) => {
+  try {
+    const state = await loadState();
+    state.queue = [];
+    await saveState(state);
+    return res.json({ ok: true, queue: [] });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to clear queue", detail: error.message });
+  }
+});
+
+app.post("/api/queue/reorder", async (req, res) => {
+  try {
+    const from = Number(req.body?.fromIndex);
+    const to = Number(req.body?.toIndex);
+    const state = await loadState();
+
+    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0 || from >= state.queue.length || to >= state.queue.length) {
+      return res.status(400).json({ error: "Invalid queue reorder indices" });
+    }
+
+    const [item] = state.queue.splice(from, 1);
+    state.queue.splice(to, 0, item);
+    await saveState(state);
+    return res.json({ ok: true, queue: state.queue });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to reorder queue", detail: error.message });
+  }
+});
+
+app.post("/api/queue/next", async (req, res) => {
+  try {
+    const state = await loadState();
+    const nextImageId = findNeighborQueueImageId(state, req.body?.currentImageId, 1);
+    return res.json({ ok: true, imageId: nextImageId });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to pick next queue image", detail: error.message });
+  }
+});
+
+app.post("/api/queue/prev", async (req, res) => {
+  try {
+    const state = await loadState();
+    const prevImageId = findNeighborQueueImageId(state, req.body?.currentImageId, -1);
+    return res.json({ ok: true, imageId: prevImageId });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to pick previous queue image", detail: error.message });
   }
 });
 
@@ -250,10 +429,14 @@ app.post("/api/sketch/stop", async (req, res) => {
     }
 
     const markSketched = req.body?.markSketched !== false;
+    const mode = req.body?.mode === "drill" ? "drill" : "free";
+    const drillConfig = req.body?.drillConfig || null;
+
     const state = await loadState();
     const record = withRecordDefaults(state.images[imageId]);
     const finalDurationMs = getElapsedMs(record);
     const stoppedAt = new Date().toISOString();
+    const image = imagesById.get(imageId);
 
     record.timer = { isRunning: false, runningSince: null, elapsedMs: 0 };
     record.durationMs = finalDurationMs;
@@ -263,6 +446,7 @@ app.post("/api/sketch/stop", async (req, res) => {
       {
         stoppedAt,
         durationMs: finalDurationMs,
+        mode,
       },
     ];
     if (markSketched) {
@@ -270,9 +454,17 @@ app.post("/api/sketch/stop", async (req, res) => {
     }
 
     state.images[imageId] = record;
+    pushSession({ state, image, imageId, durationMs: finalDurationMs, stoppedAt, mode, drillConfig });
     await saveState(state);
 
-    return res.json({ ok: true, durationMs: finalDurationMs, sketchedAt: stoppedAt, isSketched: record.isSketched });
+    return res.json({
+      ok: true,
+      durationMs: finalDurationMs,
+      sketchedAt: stoppedAt,
+      isSketched: record.isSketched,
+      autoAdvance: Boolean(state.settings.autoAdvance),
+      nextQueueImageId: state.settings.autoAdvance ? findNeighborQueueImageId(state, imageId, 1) : null,
+    });
   } catch (error) {
     return res.status(500).json({ error: "Failed to stop timer", detail: error.message });
   }
