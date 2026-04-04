@@ -109,7 +109,7 @@
               </div>
               <div class="viewer-actions">
                 <button id="focusBtn" type="button">focus view</button>
-                <button id="favoriteBtn" type="button">favorite</button>
+                <button id="favoriteBtn" class="favorite-btn" type="button">favorite</button>
                 <button id="markBtn" type="button"></button>
               </div>
             </div>
@@ -117,9 +117,8 @@
             <div class="timer-card">
               <div id="timerDisplay" class="timer-display">00:00</div>
               <div class="timer-actions">
-                <button id="startBtn" type="button">start</button>
-                <button id="pauseBtn" type="button">pause</button>
-                <button id="stopBtn" type="button">stop</button>
+                <button id="actionBtn" class="action-btn timer-btn" type="button">▷ start</button>
+                <button id="pauseBtn" class="timer-btn" type="button">pause</button>
               </div>
             </div>
 
@@ -161,12 +160,14 @@
         <div class="timer-card focus-timer">
           <div id="modalTimerDisplay" class="timer-display">00:00</div>
           <div class="timer-actions">
-            <button id="modalStartBtn" type="button">start</button>
-            <button id="modalPauseBtn" type="button">pause</button>
-            <button id="modalStopBtn" type="button">stop</button>
-            <button id="modalFavoriteBtn" type="button">favorite</button>
-            <button id="modalMarkBtn" type="button"></button>
+            <button id="modalActionBtn" class="action-btn timer-btn" type="button">▷ start</button>
+            <button id="modalPauseBtn" class="timer-btn" type="button">pause</button>
           </div>
+        </div>
+
+        <div class="focus-meta-actions">
+          <button id="modalFavoriteBtn" class="favorite-btn" type="button">favorite</button>
+          <button id="modalMarkBtn" type="button"></button>
         </div>
 
         <div class="focus-image-wrap">

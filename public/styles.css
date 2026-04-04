@@ -430,6 +430,11 @@ button:active {
   box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.42);
 }
 
+.image-card.is-favorite {
+  border-color: rgba(255, 214, 110, 0.7);
+  box-shadow: 0 0 0 1px rgba(255, 214, 110, 0.35), 0 0 14px rgba(255, 214, 110, 0.28);
+}
+
 .image-card.random-picked {
   animation: randomCardFlash 850ms ease;
 }
@@ -466,6 +471,26 @@ button:active {
   font-size: 0.68rem;
   line-height: 1;
   padding: 3px 5px;
+}
+
+.favorite-btn {
+  border: 1px solid rgba(255, 214, 110, 0.58);
+  background: linear-gradient(180deg, rgba(255, 214, 110, 0.18), rgba(255, 174, 78, 0.16));
+  color: #ffe08b;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.favorite-btn:hover {
+  border-color: rgba(255, 214, 110, 0.9);
+  box-shadow: 0 0 10px rgba(255, 214, 110, 0.28);
+}
+
+.favorite-btn.is-on {
+  background: linear-gradient(180deg, rgba(255, 214, 110, 0.32), rgba(255, 174, 78, 0.28));
+  border-color: rgba(255, 214, 110, 0.95);
+  box-shadow: 0 0 16px rgba(255, 214, 110, 0.38);
 }
 
 .thumb {
@@ -545,38 +570,63 @@ button:active {
 
 .timer-card {
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(139, 247, 197, 0.45);
   border-radius: 12px;
-  background: rgba(9, 14, 25, 0.7);
-  display: flex;
-  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(13, 21, 33, 0.86), rgba(8, 16, 25, 0.92));
+  display: grid;
+  justify-items: center;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  box-shadow: inset 0 0 0 1px rgba(139, 247, 197, 0.12);
 }
 
 .timer-display {
   font-family: "JetBrains Mono", monospace;
-  font-size: 1.7rem;
+  font-size: 2.5rem;
+  font-weight: 700;
   letter-spacing: 1px;
+  color: #bde6ff;
+  transition: color 180ms ease, text-shadow 220ms ease;
+  text-align: center;
+}
+
+.timer-display.is-running {
+  color: #8bf7c5;
+  text-shadow: 0 0 10px rgba(139, 247, 197, 0.48), 0 0 18px rgba(56, 189, 248, 0.25);
 }
 
 .timer-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
-#startBtn,
-#modalStartBtn {
-  background: rgba(52, 211, 153, 0.16);
-  border-color: rgba(52, 211, 153, 0.42);
+.timer-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(139, 247, 197, 0.4);
+  background: rgba(12, 31, 26, 0.55);
 }
 
-#stopBtn,
-#modalStopBtn {
-  background: rgba(248, 113, 113, 0.17);
-  border-color: rgba(248, 113, 113, 0.42);
+.timer-btn:hover {
+  border-color: rgba(139, 247, 197, 0.8);
+}
+
+.action-btn {
+  background: rgba(52, 211, 153, 0.24);
+  border-color: rgba(139, 247, 197, 0.75);
+  transition: transform 160ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.action-btn.is-stop {
+  background: rgba(248, 113, 113, 0.22);
+  border-color: rgba(248, 113, 113, 0.66);
+}
+
+.focus-meta-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .resizable-stage {
@@ -676,6 +726,11 @@ button:active {
   background: rgba(4, 8, 15, 0.85);
 }
 
+.queue-thumb-btn.is-favorite {
+  border-color: rgba(255, 214, 110, 0.72);
+  box-shadow: 0 0 10px rgba(255, 214, 110, 0.28);
+}
+
 .queue-thumb {
   width: 100%;
   height: 100%;
@@ -739,6 +794,11 @@ button:active {
   overflow: hidden;
   border: 1px solid rgba(125, 211, 252, 0.35);
   background: rgba(5, 9, 16, 0.8);
+}
+
+.timeline-thumb-btn.is-favorite {
+  border-color: rgba(255, 214, 110, 0.72);
+  box-shadow: 0 0 10px rgba(255, 214, 110, 0.26);
 }
 
 .timeline-thumb {

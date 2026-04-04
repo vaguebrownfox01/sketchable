@@ -53,9 +53,8 @@ const elements = {
   focusBtn: document.getElementById("focusBtn"),
   favoriteBtn: document.getElementById("favoriteBtn"),
   markBtn: document.getElementById("markBtn"),
-  startBtn: document.getElementById("startBtn"),
+  actionBtn: document.getElementById("actionBtn"),
   pauseBtn: document.getElementById("pauseBtn"),
-  stopBtn: document.getElementById("stopBtn"),
   timerDisplay: document.getElementById("timerDisplay"),
   historyMeta: document.getElementById("historyMeta"),
   splitLayout: document.getElementById("splitLayout"),
@@ -67,9 +66,8 @@ const elements = {
   modalImage: document.getElementById("modalImage"),
   modalFavoriteStar: document.getElementById("modalFavoriteStar"),
   modalTimerDisplay: document.getElementById("modalTimerDisplay"),
-  modalStartBtn: document.getElementById("modalStartBtn"),
+  modalActionBtn: document.getElementById("modalActionBtn"),
   modalPauseBtn: document.getElementById("modalPauseBtn"),
-  modalStopBtn: document.getElementById("modalStopBtn"),
   modalFavoriteBtn: document.getElementById("modalFavoriteBtn"),
   modalMarkBtn: document.getElementById("modalMarkBtn"),
   modeButtons: Array.from(document.querySelectorAll(".mode-btn")),
@@ -223,6 +221,10 @@ function renderGallery() {
       card.classList.add("is-active");
     }
 
+    if (image.isFavorite) {
+      card.classList.add("is-favorite");
+    }
+
     card.dataset.imageId = image.id;
     thumb.src = image.imageUrl;
     if (image.isFavorite) {
@@ -263,8 +265,13 @@ function renderModalContent(image) {
   elements.modalSubtitle.textContent = `${image.fileName} · ${image.folder}`;
   elements.modalImage.src = image.imageUrl;
   elements.modalTimerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  const isRunning = Boolean(image.timer?.isRunning);
+  elements.modalTimerDisplay.classList.toggle("is-running", isRunning);
+  elements.modalActionBtn.textContent = isRunning ? "■ stop" : "▷ start";
+  elements.modalActionBtn.classList.toggle("is-stop", isRunning);
   elements.modalFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
-  elements.modalFavoriteBtn.textContent = image.isFavorite ? "unfavorite" : "favorite";
+  elements.modalFavoriteBtn.textContent = image.isFavorite ? "★ favorite" : "☆ favorite";
+  elements.modalFavoriteBtn.classList.toggle("is-on", image.isFavorite);
   elements.modalMarkBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 }
 
@@ -283,8 +290,13 @@ function renderViewer() {
   elements.viewerSubtitle.textContent = `${image.fileName} · ${image.folder}${queuePosition >= 0 ? ` · Queue #${queuePosition + 1}` : ""}`;
   elements.viewerImage.src = image.imageUrl;
   elements.timerDisplay.textContent = formatDuration(image.timer?.elapsedMs || 0);
+  const isRunning = Boolean(image.timer?.isRunning);
+  elements.timerDisplay.classList.toggle("is-running", isRunning);
+  elements.actionBtn.textContent = isRunning ? "■ stop" : "▷ start";
+  elements.actionBtn.classList.toggle("is-stop", isRunning);
   elements.viewerFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
-  elements.favoriteBtn.textContent = image.isFavorite ? "unfavorite" : "favorite";
+  elements.favoriteBtn.textContent = image.isFavorite ? "★ favorite" : "☆ favorite";
+  elements.favoriteBtn.classList.toggle("is-on", image.isFavorite);
   elements.markBtn.textContent = image.isSketched ? "mark available" : "mark sketched";
 
   if (image.isSketched) {
@@ -315,6 +327,9 @@ function renderQueue() {
     const selectBtn = document.createElement("button");
     selectBtn.type = "button";
     selectBtn.className = "queue-thumb-btn";
+    if (image.isFavorite) {
+      selectBtn.classList.add("is-favorite");
+    }
     selectBtn.title = `${index + 1}. ${image.fileName}`;
 
     const thumb = document.createElement("img");
@@ -388,7 +403,7 @@ function renderTimeline() {
     const tr = document.createElement("tr");
     const image = imageById.get(session.imageId);
     const imageCell = image
-      ? `<button class="timeline-thumb-btn" type="button" data-image-id="${image.id}" title="open image"><img class="timeline-thumb" src="${image.imageUrl}" alt="timeline image" /></button>`
+      ? `<button class="timeline-thumb-btn ${image.isFavorite ? "is-favorite" : ""}" type="button" data-image-id="${image.id}" title="open image"><img class="timeline-thumb" src="${image.imageUrl}" alt="timeline image" /></button>`
       : `<span class="timeline-missing">missing</span>`;
     tr.innerHTML = `<td>${formatDateTime(session.stoppedAt)}</td><td>${formatDateTime(session.imageDateTime)}</td><td>${formatDuration(session.durationMs)}</td><td>${session.mode}</td><td>${imageCell}</td>`;
     elements.timelineBody.appendChild(tr);
@@ -690,6 +705,18 @@ async function stopSketch() {
   }
 }
 
+async function actionPrimary() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
+  }
+  if (selected.timer?.isRunning) {
+    await stopSketch();
+  } else {
+    await startSketch();
+  }
+}
+
 function toggleSelectedSketchStatus() {
   const selected = getSelectedImage();
   if (!selected) {
@@ -882,14 +909,12 @@ function attachEvents() {
     render();
   });
 
-  elements.startBtn.addEventListener("click", startSketch);
+  elements.actionBtn.addEventListener("click", actionPrimary);
   elements.pauseBtn.addEventListener("click", pauseSketch);
-  elements.stopBtn.addEventListener("click", stopSketch);
   elements.markBtn.addEventListener("click", toggleSelectedSketchStatus);
 
-  elements.modalStartBtn.addEventListener("click", startSketch);
+  elements.modalActionBtn.addEventListener("click", actionPrimary);
   elements.modalPauseBtn.addEventListener("click", pauseSketch);
-  elements.modalStopBtn.addEventListener("click", stopSketch);
   elements.favoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
   elements.modalFavoriteBtn.addEventListener("click", toggleSelectedFavoriteStatus);
   elements.modalMarkBtn.addEventListener("click", toggleSelectedSketchStatus);
