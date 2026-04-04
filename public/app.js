@@ -138,6 +138,29 @@ function formatDateTime(isoString) {
   return date.toLocaleString().toLowerCase();
 }
 
+let toastTimer = null;
+let toastEl = null;
+
+function showToast(message) {
+  if (!toastEl) {
+    toastEl = document.createElement("div");
+    toastEl.className = "app-toast";
+    document.body.appendChild(toastEl);
+  }
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+
+  toastEl.textContent = message;
+  toastEl.classList.add("is-visible");
+
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove("is-visible");
+  }, 2600);
+}
+
 function getDisplayDate(image) {
   if (!image?.parsedDate) {
     return "undated reference";
@@ -714,8 +737,13 @@ function getNextImageCandidate(serverNextId) {
 }
 
 async function startSketch() {
+  if (state.mode === "drill" && state.queue.length === 0) {
+    showToast("your queue is empty - add a few images and let the drill begin ✨");
+    return;
+  }
+
   if (state.mode === "drill" && !isSelectedInQueue()) {
-    elements.historyMeta.textContent = "drill mode uses queue only. add this image to queue first.";
+    showToast("pick from queue to start drill mode 🎯");
     return;
   }
   await performAction((selected) => apiPost("/api/sketch/start", { imageId: selected.id }));
