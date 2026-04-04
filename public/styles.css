@@ -978,7 +978,17 @@ button:active {
   height: min(86vh, 820px);
   background: rgba(10, 16, 29, 0.78);
   backdrop-filter: blur(10px);
-  grid-template-rows: auto auto auto 1fr;
+  display: grid;
+  grid-template-rows: auto auto minmax(180px, 1fr) auto;
+  align-content: start;
+  gap: 10px;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.dashboard-content .focus-top {
+  flex: 0 0 auto;
+  align-items: center;
 }
 
 .dashboard-cards {
@@ -1010,6 +1020,7 @@ button:active {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  min-height: 0;
 }
 
 .dash-panel {
@@ -1017,6 +1028,9 @@ button:active {
   border-radius: 10px;
   padding: 8px;
   background: rgba(6, 12, 21, 0.45);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .dash-panel h4 {
@@ -1028,6 +1042,8 @@ button:active {
 .bar-list {
   display: grid;
   gap: 6px;
+  overflow: auto;
+  min-height: 0;
 }
 
 .bar-row {
@@ -1115,6 +1131,45 @@ button:active {
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
+}
+
+.focus-content.dashboard-content {
+  display: grid;
+  grid-template-rows: auto auto minmax(180px, 1fr) auto;
+  align-content: start;
+  gap: 10px;
+  align-items: stretch;
+  overflow: auto;
+  max-height: calc(100vh - 16px);
+}
+
+.focus-content.dashboard-content .focus-top {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.focus-content.dashboard-content .dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.focus-content.dashboard-content .dashboard-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-height: 0;
+}
+
+.focus-content.dashboard-content .dash-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.focus-content.dashboard-content .bar-list {
+  overflow: auto;
+  min-height: 0;
 }
 
 .focus-content.timeline-content .timeline-filters {
@@ -1309,11 +1364,24 @@ button:active {
     max-width: 100%;
   }
 
-  .dashboard-cards {
+  .focus-content.dashboard-content {
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+    max-height: calc(100vh - 18px);
+    overflow: auto;
+  }
+
+  #dashboardModal {
+    place-items: start center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .focus-content.dashboard-content .dashboard-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-bars {
+  .focus-content.dashboard-content .dashboard-bars {
     grid-template-columns: 1fr;
   }
 

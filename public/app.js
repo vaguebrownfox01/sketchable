@@ -93,12 +93,10 @@ const elements = {
   dashboardModal: document.getElementById("dashboardModal"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
   clearSessionsDashboardBtn: document.getElementById("clearSessionsDashboardBtn"),
-  dashTotalSessions: document.getElementById("dashTotalSessions"),
   dashTotalTime: document.getElementById("dashTotalTime"),
   dashAvgTime: document.getElementById("dashAvgTime"),
   dashLongestTime: document.getElementById("dashLongestTime"),
   dashThisMonth: document.getElementById("dashThisMonth"),
-  dashQueueSize: document.getElementById("dashQueueSize"),
   dashSketchedCount: document.getElementById("dashSketchedCount"),
   dashAvailableCount: document.getElementById("dashAvailableCount"),
   dashModeBars: document.getElementById("dashModeBars"),
@@ -542,12 +540,10 @@ function renderDashboard() {
   const favoriteCount = images.filter((image) => image.isFavorite).length;
   const availableCount = images.length - sketchedCount;
 
-  elements.dashTotalSessions.textContent = String(totalSessions);
   elements.dashTotalTime.textContent = formatDuration(totalDuration);
   elements.dashAvgTime.textContent = formatDuration(avgDuration);
   elements.dashLongestTime.textContent = formatDuration(longestDuration);
   elements.dashThisMonth.textContent = String(thisMonthCount);
-  elements.dashQueueSize.textContent = String(state.queue.length);
   elements.dashSketchedCount.textContent = String(sketchedCount);
   elements.dashAvailableCount.textContent = String(availableCount);
 
