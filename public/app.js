@@ -77,6 +77,7 @@ const elements = {
   queuePrevBtn: document.getElementById("queuePrevBtn"),
   queueNextBtn: document.getElementById("queueNextBtn"),
   timelineBtn: document.getElementById("timelineBtn"),
+  dashboardBtn: document.getElementById("dashboardBtn"),
   helpBtn: document.getElementById("helpBtn"),
   queueRemoveBtn: document.getElementById("queueRemoveBtn"),
   queueClearBtn: document.getElementById("queueClearBtn"),
@@ -89,6 +90,19 @@ const elements = {
   timelineBody: document.getElementById("timelineBody"),
   helpModal: document.getElementById("helpModal"),
   closeHelpBtn: document.getElementById("closeHelpBtn"),
+  dashboardModal: document.getElementById("dashboardModal"),
+  closeDashboardBtn: document.getElementById("closeDashboardBtn"),
+  dashTotalSessions: document.getElementById("dashTotalSessions"),
+  dashTotalTime: document.getElementById("dashTotalTime"),
+  dashAvgTime: document.getElementById("dashAvgTime"),
+  dashLongestTime: document.getElementById("dashLongestTime"),
+  dashThisMonth: document.getElementById("dashThisMonth"),
+  dashQueueSize: document.getElementById("dashQueueSize"),
+  dashSketchedCount: document.getElementById("dashSketchedCount"),
+  dashAvailableCount: document.getElementById("dashAvailableCount"),
+  dashModeBars: document.getElementById("dashModeBars"),
+  dashMonthBars: document.getElementById("dashMonthBars"),
+  dashInsights: document.getElementById("dashInsights"),
 };
 
 function formatDuration(durationMs) {
@@ -354,6 +368,73 @@ function renderTimeline() {
   }
 }
 
+function renderBarList(container, items) {
+  container.innerHTML = "";
+  const max = Math.max(1, ...items.map((item) => item.value));
+
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    const width = Math.max(6, Math.round((item.value / max) * 100));
+    row.innerHTML = `<span>${item.label}</span><div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div><strong>${item.value}</strong>`;
+    container.appendChild(row);
+  });
+}
+
+function renderDashboard() {
+  const sessions = state.sessions || [];
+  const images = state.images || [];
+
+  const totalSessions = sessions.length;
+  const totalDuration = sessions.reduce((sum, session) => sum + Number(session.durationMs || 0), 0);
+  const avgDuration = totalSessions ? Math.floor(totalDuration / totalSessions) : 0;
+  const longestDuration = sessions.reduce((max, session) => Math.max(max, Number(session.durationMs || 0)), 0);
+
+  const now = new Date();
+  const thisMonthCount = sessions.filter((session) => {
+    const date = new Date(session.stoppedAt);
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }).length;
+
+  const freeCount = sessions.filter((session) => session.mode === "free").length;
+  const drillCount = sessions.filter((session) => session.mode === "drill").length;
+
+  const monthCounts = Array.from({ length: 12 }, (_, index) => ({
+    label: Object.keys(MONTHS)[index],
+    value: 0,
+  }));
+
+  sessions.forEach((session) => {
+    const source = session.imageDateTime || session.stoppedAt;
+    const date = new Date(source);
+    if (!Number.isNaN(date.getTime())) {
+      monthCounts[date.getMonth()].value += 1;
+    }
+  });
+
+  const sketchedCount = images.filter((image) => image.isSketched).length;
+  const availableCount = images.length - sketchedCount;
+
+  elements.dashTotalSessions.textContent = String(totalSessions);
+  elements.dashTotalTime.textContent = formatDuration(totalDuration);
+  elements.dashAvgTime.textContent = formatDuration(avgDuration);
+  elements.dashLongestTime.textContent = formatDuration(longestDuration);
+  elements.dashThisMonth.textContent = String(thisMonthCount);
+  elements.dashQueueSize.textContent = String(state.queue.length);
+  elements.dashSketchedCount.textContent = String(sketchedCount);
+  elements.dashAvailableCount.textContent = String(availableCount);
+
+  renderBarList(elements.dashModeBars, [
+    { label: "free", value: freeCount },
+    { label: "drill", value: drillCount },
+  ]);
+  renderBarList(elements.dashMonthBars, monthCounts);
+
+  const bestMonth = [...monthCounts].sort((a, b) => b.value - a.value)[0];
+  const avgMinutes = avgDuration ? Math.max(1, Math.round(avgDuration / 60000)) : 0;
+  elements.dashInsights.innerHTML = `<p>most active month: <strong>${bestMonth.label}</strong> (${bestMonth.value})</p><p>average pace: <strong>${avgMinutes} min</strong> per sketch</p>`;
+}
+
 function renderTabs() {
   const isSketchedView = state.activeTab === "sketched";
   const counts = {
@@ -455,6 +536,7 @@ function render() {
   renderViewer();
   renderQueue();
   renderTimeline();
+  renderDashboard();
   refreshTimerTicker();
 }
 
@@ -631,9 +713,26 @@ function openHelpModal() {
   document.body.classList.add("modal-open");
 }
 
+function openDashboardModal() {
+  renderDashboard();
+  elements.dashboardModal.classList.remove("is-hidden");
+  document.body.classList.add("modal-open");
+}
+
 function closeHelpModal() {
   elements.helpModal.classList.add("is-hidden");
   if (elements.focusModal.classList.contains("is-hidden") && elements.timelineModal.classList.contains("is-hidden")) {
+    document.body.classList.remove("modal-open");
+  }
+}
+
+function closeDashboardModal() {
+  elements.dashboardModal.classList.add("is-hidden");
+  if (
+    elements.focusModal.classList.contains("is-hidden") &&
+    elements.timelineModal.classList.contains("is-hidden") &&
+    elements.helpModal.classList.contains("is-hidden")
+  ) {
     document.body.classList.remove("modal-open");
   }
 }
@@ -768,6 +867,7 @@ function attachEvents() {
   elements.queuePrevBtn.addEventListener("click", () => queueMove(-1));
 
   elements.timelineBtn.addEventListener("click", openTimelineModal);
+  elements.dashboardBtn.addEventListener("click", openDashboardModal);
   elements.helpBtn.addEventListener("click", openHelpModal);
   elements.timelineModeFilter.addEventListener("change", () => {
     state.timelineMode = elements.timelineModeFilter.value;
@@ -800,11 +900,19 @@ function attachEvents() {
     }
   });
 
+  elements.closeDashboardBtn.addEventListener("click", closeDashboardModal);
+  elements.dashboardModal.addEventListener("click", (event) => {
+    if (event.target && event.target.dataset.closeDashboard === "true") {
+      closeDashboardModal();
+    }
+  });
+
   window.addEventListener("keydown", async (event) => {
     if (event.key === "Escape") {
       closeFocusModal();
       closeTimelineModal();
       closeHelpModal();
+      closeDashboardModal();
       return;
     }
 
@@ -841,6 +949,8 @@ function attachEvents() {
       openTimelineModal();
     } else if (key === "q") {
       await addSelectedToQueue();
+    } else if (key === "d") {
+      openDashboardModal();
     }
   });
 

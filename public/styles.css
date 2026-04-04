@@ -712,6 +712,99 @@ button:active {
   backdrop-filter: blur(10px);
 }
 
+.dashboard-content {
+  width: min(980px, calc(100vw - 36px));
+  height: min(86vh, 820px);
+  background: rgba(10, 16, 29, 0.78);
+  backdrop-filter: blur(10px);
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dash-card {
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(6, 12, 21, 0.6);
+  display: grid;
+  gap: 4px;
+}
+
+.dash-card span {
+  color: rgba(168, 181, 209, 0.72);
+  font-size: 0.72rem;
+}
+
+.dash-card strong {
+  font-size: 1rem;
+  color: #d8efff;
+}
+
+.dashboard-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dash-panel {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(6, 12, 21, 0.45);
+}
+
+.dash-panel h4 {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: rgba(198, 230, 255, 0.9);
+}
+
+.bar-list {
+  display: grid;
+  gap: 6px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 44px 1fr 26px;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.72rem;
+  color: rgba(212, 227, 247, 0.9);
+}
+
+.bar-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(125, 211, 252, 0.14);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7dd3fc, #38bdf8);
+}
+
+.dash-insights {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(6, 12, 21, 0.45);
+  display: grid;
+  gap: 6px;
+  font-size: 0.84rem;
+}
+
+.dash-insights p {
+  margin: 0;
+}
+
 .help-grid {
   display: grid;
   gap: 10px;
@@ -832,6 +925,14 @@ button:active {
   .split-layout {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-bars {
+    grid-template-columns: 1fr;
   }
 
   .v2-sidebar {

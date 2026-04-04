@@ -16,6 +16,7 @@
           <div class="tab-group">
             <button class="tab is-active" data-tab="available" type="button">available</button>
             <button class="tab" data-tab="sketched" type="button">sketched</button>
+            <button id="dashboardBtn" class="help-btn" type="button" aria-label="open dashboard" title="dashboard">◫</button>
             <button id="helpBtn" class="help-btn" type="button" aria-label="how to use sketchable" title="how to use">?</button>
             <button id="randomBtn" class="random-btn" type="button" aria-label="pick random image" title="random image">
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -221,6 +222,43 @@
           <p>open <strong>☰ timeline</strong> anytime to review your progress and session durations.</p>
           <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, r random, f focus, t timeline.</p>
         </div>
+      </div>
+    </div>
+
+    <div id="dashboardModal" class="focus-modal is-hidden" role="dialog" aria-modal="true" aria-label="dashboard stats">
+      <div class="focus-backdrop" data-close-dashboard="true"></div>
+      <div class="focus-content dashboard-content">
+        <div class="focus-top">
+          <div>
+            <h2>dashboard</h2>
+            <p>quick sketch insights</p>
+          </div>
+          <button id="closeDashboardBtn" type="button">close</button>
+        </div>
+
+        <div class="dashboard-cards">
+          <article class="dash-card"><span>sessions</span><strong id="dashTotalSessions">0</strong></article>
+          <article class="dash-card"><span>total time</span><strong id="dashTotalTime">00:00</strong></article>
+          <article class="dash-card"><span>avg session</span><strong id="dashAvgTime">00:00</strong></article>
+          <article class="dash-card"><span>longest</span><strong id="dashLongestTime">00:00</strong></article>
+          <article class="dash-card"><span>this month</span><strong id="dashThisMonth">0</strong></article>
+          <article class="dash-card"><span>queue size</span><strong id="dashQueueSize">0</strong></article>
+          <article class="dash-card"><span>sketched</span><strong id="dashSketchedCount">0</strong></article>
+          <article class="dash-card"><span>available</span><strong id="dashAvailableCount">0</strong></article>
+        </div>
+
+        <div class="dashboard-bars">
+          <section class="dash-panel">
+            <h4>mode split</h4>
+            <div id="dashModeBars" class="bar-list"></div>
+          </section>
+          <section class="dash-panel">
+            <h4>month activity</h4>
+            <div id="dashMonthBars" class="bar-list"></div>
+          </section>
+        </div>
+
+        <div id="dashInsights" class="dash-insights"></div>
       </div>
     </div>
 

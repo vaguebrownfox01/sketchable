@@ -1,39 +1,67 @@
-# Sketchable
+# sketchable
 
-Sketchable is a local-first gallery app for sketch practice. It indexes your photo folders, extracts date/time from image names, and gives you a clean dark-mode UI for selecting references, running a timer, and tracking completed sketches.
+sketchable is a local-first sketch reference app. it indexes your image folders, extracts date/time from filenames, and gives you a modern dark ui for finding references, timing sketch sessions, and tracking progress.
 
-## Features in v1
+## current features (v1 + v2)
 
-- Gallery view with thumbnails
-- Search by filename, folder, and parsed date/time
-- Date/time extraction from names like `IMG_20221103_194503.jpg`
-- Available vs Sketched tabs
-- Fullscreen image viewing
-- Resizable two-pane layout on desktop
-- Stopwatch controls (start, pause, stop)
-- Mark image as sketched/available
-- Persistent local state for sketch records
+### gallery and filtering
+- thumbnail gallery with search
+- month-based filters (`all`, `jan` ... `dec`, `undated`)
+- available vs sketched tabs
+- date-first card labels for quick browsing
+- random image pick with animation
 
-## Run locally
+### sketch workflow
+- start / pause / stop timer
+- free mode and drill mode
+- drill presets + custom duration + rounds
+- auto-next option after stop
+- focus modal for distraction-free reference view
 
-1. Install dependencies:
+### queue and navigation
+- add selected image to queue
+- compact queue list with thumbnails
+- queue reorder with up/down controls
+- queue prev/next navigation
+
+### tracking and insights
+- persistent local state in `data/sketch-state.json`
+- per-image sketch status + duration + history
+- timeline modal with mode/month filters
+- dashboard modal with summary stats and activity bars
+
+### keyboard shortcuts
+- `space`: start/pause
+- `s`: stop
+- `q`: add selected image to queue
+- `n` / `p`: queue next / prev
+- `r`: random image
+- `f`: open focus view
+- `t`: open timeline
+- `d`: open dashboard
+- `esc`: close open modals
+
+## run locally
+
+1. install dependencies
 
 ```bash
 npm install
 ```
 
-2. Start the app:
+2. start server
 
 ```bash
 npm start
 ```
 
-3. Open:
+3. open app
 
 `http://localhost:3100`
 
-## Notes
+## notes
 
-- The app scans this project directory recursively for image files.
-- Supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`.
-- State is stored in `data/sketch-state.json`.
+- image scanning is recursive from the project root.
+- supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`.
+- excluded folders include `cwooks`, `node_modules`, `public`, `data`, and `.git`.
+- state schema includes settings, queue, sessions, and per-image records.
