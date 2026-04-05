@@ -1,5 +1,9 @@
+require("dotenv").config();
+
 const express = require("express");
 const compression = require("compression");
+const session = require("express-session");
+const bcrypt = require("bcryptjs");
 const fs = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
@@ -24,12 +28,100 @@ const DEFAULT_SETTINGS = {
   defaultDrillSeconds: 120,
 };
 
+const AUTH_USER = process.env.SKETCHABLE_USER || "admin";
+const AUTH_PASSWORD_HASH = process.env.SKETCHABLE_PASSWORD_HASH || "";
+const AUTH_PASSWORD = process.env.SKETCHABLE_PASSWORD || "";
+const SESSION_SECRET = process.env.SESSION_SECRET || "change-this-session-secret";
+
 app.use(express.json());
 app.use(compression());
+app.set("trust proxy", 1);
+app.use(
+  session({
+    name: "sketchable.sid",
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: IS_PROD ? "auto" : false,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+  })
+);
 
 if (IS_PROD) {
   app.disable("x-powered-by");
 }
+
+function isAuthenticated(req) {
+  return Boolean(req.session && req.session.authenticated === true);
+}
+
+function requireAuthApi(req, res, next) {
+  if (isAuthenticated(req)) {
+    return next();
+  }
+  return res.status(401).json({ error: "Unauthorized" });
+}
+
+function requireAuthPage(req, res, next) {
+  if (isAuthenticated(req)) {
+    return next();
+  }
+  return res.redirect("/login");
+}
+
+app.get("/login", (req, res) => {
+  if (isAuthenticated(req)) {
+    return res.redirect("/");
+  }
+
+  return res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>sketchable login</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0a0f18;color:#e8f0ff;font-family:system-ui,sans-serif}form{width:min(360px,92vw);display:grid;gap:12px;background:#101a2a;border:1px solid #263957;border-radius:14px;padding:18px}input{background:#0b1220;border:1px solid #2a3f62;color:#e8f0ff;padding:10px;border-radius:10px}button{padding:10px;border-radius:10px;border:1px solid #6aa8ff;background:#1f3f66;color:#fff;cursor:pointer}.err{color:#ffb4b4;font-size:.88rem;min-height:1.2em}</style></head><body><form id="loginForm"><h2 style="margin:0">sketchable</h2><p style="margin:0;color:#abc0df">sign in to continue</p><input id="user" placeholder="username" autocomplete="username" required/><input id="pass" type="password" placeholder="password" autocomplete="current-password" required/><button type="submit">sign in</button><div id="err" class="err"></div></form><script>const f=document.getElementById('loginForm');const e=document.getElementById('err');f.addEventListener('submit',async(ev)=>{ev.preventDefault();e.textContent='';const body={username:document.getElementById('user').value,password:document.getElementById('pass').value};const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){e.textContent='invalid credentials';return;}window.location.href='/';});</script></body></html>`);
+});
+
+app.post("/auth/login", async (req, res) => {
+  try {
+    const username = String(req.body?.username || "").trim();
+    const password = String(req.body?.password || "");
+
+    if (!AUTH_PASSWORD_HASH && !AUTH_PASSWORD) {
+      return res.status(500).json({ error: "Auth is not configured" });
+    }
+
+    const userOk = username === AUTH_USER;
+    const passOk = AUTH_PASSWORD_HASH
+      ? await bcrypt.compare(password, AUTH_PASSWORD_HASH)
+      : password === AUTH_PASSWORD;
+    if (!userOk || !passOk) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    req.session.authenticated = true;
+    req.session.username = username;
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Login failed", detail: error.message });
+  }
+});
+
+app.post("/auth/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie("sketchable.sid");
+    res.json({ ok: true });
+  });
+});
+
+app.get("/auth/me", (req, res) => {
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ authenticated: false });
+  }
+  return res.json({ authenticated: true, username: req.session.username || AUTH_USER });
+});
+
+app.use("/api", requireAuthApi);
 
 function createImageId(relativePath) {
   return crypto.createHash("sha1").update(relativePath).digest("hex").slice(0, 16);
@@ -579,7 +671,7 @@ app.post("/api/state/reset", async (_req, res) => {
   }
 });
 
-app.get("/image/*", async (req, res) => {
+app.get("/image/*", requireAuthApi, async (req, res) => {
   try {
     const relativePath = decodeURIComponent(req.params[0]);
     const absolutePath = path.resolve(ROOT_DIR, relativePath);
@@ -595,6 +687,7 @@ app.get("/image/*", async (req, res) => {
 });
 
 app.use(
+  requireAuthPage,
   express.static(PUBLIC_DIR, {
     setHeaders: (res, filePath) => {
       if (filePath.endsWith("index.html") || filePath.endsWith(".js") || filePath.endsWith(".css")) {
@@ -608,7 +701,7 @@ app.use(
   })
 );
 
-app.get("*", (_req, res) => {
+app.get("*", requireAuthPage, (_req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });

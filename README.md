@@ -69,8 +69,6 @@ npm run start:prod
 
 then open from another device on your network (example):
 
-`http://192.168.1.42:3100`
-
 optional process manager (pm2):
 
 ```bash

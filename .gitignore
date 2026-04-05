@@ -31,9 +31,12 @@ pnpm-debug.log*
 # Environment files
 .env
 .env.*
+!.env.example
 
 # OS/editor noise
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
+auth-commands.txt
+.env.example
