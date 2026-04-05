@@ -29,6 +29,12 @@ sketchable is a local-first sketch reference app. it indexes your image folders,
 - per-image sketch status + duration + history
 - timeline modal with mode/month filters
 - dashboard modal with summary stats and activity bars
+- dashboard action to clear offline app/image cache
+
+### pwa + offline cache
+- installable web app (`manifest.webmanifest` + service worker)
+- app shell and image responses are cached for offline use
+- use dashboard `clear cache` to remove offline cached files/images
 
 ### keyboard shortcuts
 - `space`: start/pause

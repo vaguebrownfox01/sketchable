@@ -34,6 +34,7 @@ const state = {
   isStoppingFromDrillTick: false,
   lastTapImageId: null,
   lastTapAt: 0,
+  isOfflineSnapshot: false,
 };
 
 const elements = {
@@ -46,6 +47,8 @@ const elements = {
   viewerPanel: document.getElementById("viewerPanel"),
   jumpFabBtn: document.getElementById("jumpFabBtn"),
   queueFabBtn: document.getElementById("queueFabBtn"),
+  logoutBtn: document.getElementById("logoutBtn"),
+  authStatus: document.getElementById("authStatus"),
   galleryGrid: document.getElementById("galleryGrid"),
   cardTemplate: document.getElementById("cardTemplate"),
   emptyViewer: document.getElementById("emptyViewer"),
@@ -96,6 +99,7 @@ const elements = {
   dashboardModal: document.getElementById("dashboardModal"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
   clearSessionsDashboardBtn: document.getElementById("clearSessionsDashboardBtn"),
+  clearCacheDashboardBtn: document.getElementById("clearCacheDashboardBtn"),
   resetAllDashboardBtn: document.getElementById("resetAllDashboardBtn"),
   dashTotalTime: document.getElementById("dashTotalTime"),
   dashAvgTime: document.getElementById("dashAvgTime"),
@@ -161,6 +165,26 @@ function showToast(message) {
   toastTimer = setTimeout(() => {
     toastEl.classList.remove("is-visible");
   }, 2600);
+}
+
+function readSnapshot(key, fallbackValue) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      return fallbackValue;
+    }
+    return JSON.parse(raw);
+  } catch (_error) {
+    return fallbackValue;
+  }
+}
+
+function writeSnapshot(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (_error) {
+    return;
+  }
 }
 
 function getDisplayDate(image) {
@@ -726,24 +750,59 @@ async function apiPost(url, payload) {
   return response.json();
 }
 
-async function loadImages() {
-  const response = await fetch("/api/images");
+async function loadAuthState() {
+  const response = await fetch("/auth/me", { cache: "no-store" });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Unauthorized");
+  }
   if (!response.ok) {
-    throw new Error("Failed to load images");
+    throw new Error("Failed to load auth state");
   }
   const payload = await response.json();
-  state.images = payload.images || [];
+  writeSnapshot("sketchable.auth", payload);
+  return payload;
+}
+
+async function loadImages() {
+  try {
+    const response = await fetch("/api/images", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Failed to load images");
+    }
+    const payload = await response.json();
+    state.images = payload.images || [];
+    writeSnapshot("sketchable.images", state.images);
+    return;
+  } catch (_error) {
+    const cachedImages = readSnapshot("sketchable.images", []);
+    state.images = Array.isArray(cachedImages) ? cachedImages : [];
+  }
 }
 
 async function loadRemoteState() {
-  const response = await fetch("/api/state");
-  if (!response.ok) {
-    throw new Error("Failed to load state");
+  try {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Failed to load state");
+    }
+    const payload = await response.json();
+    state.queue = payload.queue || [];
+    state.sessions = payload.sessions || [];
+    state.settings = payload.settings || state.settings;
+    writeSnapshot("sketchable.remoteState", {
+      queue: state.queue,
+      sessions: state.sessions,
+      settings: state.settings,
+    });
+  } catch (_error) {
+    const cached = readSnapshot("sketchable.remoteState", null);
+    if (cached && typeof cached === "object") {
+      state.queue = Array.isArray(cached.queue) ? cached.queue : [];
+      state.sessions = Array.isArray(cached.sessions) ? cached.sessions : [];
+      state.settings = cached.settings && typeof cached.settings === "object" ? cached.settings : state.settings;
+    }
   }
-  const payload = await response.json();
-  state.queue = payload.queue || [];
-  state.sessions = payload.sessions || [];
-  state.settings = payload.settings || state.settings;
   state.drillSeconds = Number(state.settings.defaultDrillSeconds || state.drillSeconds);
 
   if (state.mode === "drill" && state.queue.length > 0) {
@@ -755,7 +814,32 @@ async function loadRemoteState() {
 }
 
 async function reloadData() {
-  await Promise.all([loadImages(), loadRemoteState()]);
+  state.isOfflineSnapshot = false;
+  let auth = null;
+
+  try {
+    [auth] = await Promise.all([loadAuthState(), loadImages(), loadRemoteState()]);
+  } catch (_error) {
+    auth = readSnapshot("sketchable.auth", { authenticated: true, username: "offline" });
+    await Promise.all([loadImages(), loadRemoteState()]);
+    state.isOfflineSnapshot = true;
+  }
+
+  if (elements.authStatus) {
+    if (auth?.authenticated) {
+      elements.authStatus.textContent = state.isOfflineSnapshot
+        ? `offline snapshot: ${auth.username || "user"}`
+        : `signed in: ${auth.username || "user"}`;
+      elements.authStatus.classList.remove("is-hidden");
+    } else {
+      elements.authStatus.textContent = "";
+      elements.authStatus.classList.add("is-hidden");
+    }
+  }
+
+  if (state.isOfflineSnapshot) {
+    showToast("offline mode: using last synced snapshot");
+  }
 }
 
 async function performAction(action) {
@@ -962,9 +1046,7 @@ function openFocusModal() {
 
 function closeFocusModal() {
   elements.focusModal.classList.add("is-hidden");
-  if (elements.timelineModal.classList.contains("is-hidden")) {
-    document.body.classList.remove("modal-open");
-  }
+  maybeUnlockBodyScroll();
 }
 
 function openTimelineModal() {
@@ -984,28 +1066,61 @@ function openDashboardModal() {
   document.body.classList.add("modal-open");
 }
 
-function closeHelpModal() {
-  elements.helpModal.classList.add("is-hidden");
-  if (elements.focusModal.classList.contains("is-hidden") && elements.timelineModal.classList.contains("is-hidden")) {
+function maybeUnlockBodyScroll() {
+  if (
+    elements.focusModal.classList.contains("is-hidden") &&
+    elements.timelineModal.classList.contains("is-hidden") &&
+    elements.helpModal.classList.contains("is-hidden") &&
+    elements.dashboardModal.classList.contains("is-hidden")
+  ) {
     document.body.classList.remove("modal-open");
   }
 }
 
+function closeHelpModal() {
+  elements.helpModal.classList.add("is-hidden");
+  maybeUnlockBodyScroll();
+}
+
 function closeDashboardModal() {
   elements.dashboardModal.classList.add("is-hidden");
-  if (
-    elements.focusModal.classList.contains("is-hidden") &&
-    elements.timelineModal.classList.contains("is-hidden") &&
-    elements.helpModal.classList.contains("is-hidden")
-  ) {
-    document.body.classList.remove("modal-open");
-  }
+  maybeUnlockBodyScroll();
 }
 
 async function clearSessionStats() {
   await apiPost("/api/sessions/clear", {});
   await reloadData();
   render();
+}
+
+async function clearAppCache() {
+  if (!("serviceWorker" in navigator) || !("caches" in window)) {
+    showToast("cache controls are not available in this browser");
+    return;
+  }
+
+  const confirmed = window.confirm("clear all offline cached files and images?");
+  if (!confirmed) {
+    return;
+  }
+
+  const cacheNames = await caches.keys();
+  await Promise.all(cacheNames.map((name) => caches.delete(name)));
+
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (registration && registration.active) {
+    registration.active.postMessage({ type: "CLEAR_RUNTIME_CACHE" });
+  }
+
+  showToast("offline cache cleared");
+}
+
+async function logout() {
+  try {
+    await apiPost("/auth/logout", {});
+  } finally {
+    window.location.href = "/login";
+  }
 }
 
 async function resetAllState() {
@@ -1022,9 +1137,7 @@ async function resetAllState() {
 
 function closeTimelineModal() {
   elements.timelineModal.classList.add("is-hidden");
-  if (elements.focusModal.classList.contains("is-hidden")) {
-    document.body.classList.remove("modal-open");
-  }
+  maybeUnlockBodyScroll();
 }
 
 function isTypingTarget(target) {
@@ -1214,12 +1327,15 @@ function attachEvents() {
 
   elements.closeDashboardBtn.addEventListener("click", closeDashboardModal);
   elements.clearSessionsDashboardBtn.addEventListener("click", clearSessionStats);
+  elements.clearCacheDashboardBtn.addEventListener("click", clearAppCache);
   elements.resetAllDashboardBtn.addEventListener("click", resetAllState);
   elements.dashboardModal.addEventListener("click", (event) => {
     if (event.target && event.target.dataset.closeDashboard === "true") {
       closeDashboardModal();
     }
   });
+
+  elements.logoutBtn.addEventListener("click", logout);
 
   window.addEventListener("keydown", async (event) => {
     if (event.key === "Escape") {
@@ -1296,6 +1412,40 @@ function attachEvents() {
 
 async function init() {
   attachEvents();
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+
+      if (registration.waiting) {
+        showToast("new version ready - refreshing now");
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+        if (!newWorker) {
+          return;
+        }
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            showToast("update downloaded - applying");
+            newWorker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+
+      let hasReloadedForSw = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (hasReloadedForSw) {
+          return;
+        }
+        hasReloadedForSw = true;
+        window.location.reload();
+      });
+    } catch (_error) {
+      showToast("offline mode setup failed");
+    }
+  }
   await reloadData();
   state.drillSeconds = Number(state.settings.defaultDrillSeconds || state.drillSeconds);
   state.selectedId = state.images[0]?.id || null;

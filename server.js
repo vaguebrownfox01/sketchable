@@ -3,6 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const compression = require("compression");
 const session = require("express-session");
+const FileStore = require("session-file-store")(session);
+const fsSync = require("fs");
 const bcrypt = require("bcryptjs");
 const fs = require("fs/promises");
 const path = require("path");
@@ -17,6 +19,9 @@ const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const STATE_FILE = path.join(DATA_DIR, "sketch-state.json");
+const SESSION_DIR = path.join(DATA_DIR, "sessions");
+
+fsSync.mkdirSync(SESSION_DIR, { recursive: true });
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic"]);
 const EXCLUDED_DIRS = new Set(["node_modules", "public", "data", ".git", "cwooks"]);
@@ -40,6 +45,11 @@ app.use(
   session({
     name: "sketchable.sid",
     secret: SESSION_SECRET,
+    store: new FileStore({
+      path: SESSION_DIR,
+      ttl: 60 * 60 * 24 * 7,
+      retries: 1,
+    }),
     resave: false,
     saveUninitialized: false,
     proxy: true,
