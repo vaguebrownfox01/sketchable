@@ -4,6 +4,7 @@ const express = require("express");
 const compression = require("compression");
 const session = require("express-session");
 const FileStore = require("session-file-store")(session);
+const sharp = require("sharp");
 const fsSync = require("fs");
 const bcrypt = require("bcryptjs");
 const fs = require("fs/promises");
@@ -20,8 +21,10 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const STATE_FILE = path.join(DATA_DIR, "sketch-state.json");
 const SESSION_DIR = path.join(DATA_DIR, "sessions");
+const THUMB_DIR = path.join(DATA_DIR, "thumb-cache");
 
 fsSync.mkdirSync(SESSION_DIR, { recursive: true });
+fsSync.mkdirSync(THUMB_DIR, { recursive: true });
 
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic"]);
 const EXCLUDED_DIRS = new Set(["node_modules", "public", "data", ".git", "cwooks"]);
@@ -291,6 +294,7 @@ function mergeImageWithState(image, state) {
   return {
     ...image,
     imageUrl: `/image/${encodeURIComponent(image.relativePath)}`,
+    thumbUrl: `/thumb/${encodeURIComponent(image.relativePath)}?w=360`,
     isSketched: record.isSketched,
     isFavorite: record.isFavorite,
     sketchedAt: record.sketchedAt,
@@ -693,6 +697,45 @@ app.get("/image/*", requireAuthApi, async (req, res) => {
     return res.sendFile(absolutePath);
   } catch (error) {
     return res.status(404).json({ error: "Image not found", detail: error.message });
+  }
+});
+
+app.get("/thumb/*", requireAuthApi, async (req, res) => {
+  try {
+    const relativePath = decodeURIComponent(req.params[0]);
+    const width = Math.max(120, Math.min(720, Number(req.query?.w || 360)));
+    const absolutePath = path.resolve(ROOT_DIR, relativePath);
+
+    if (!absolutePath.startsWith(ROOT_DIR + path.sep)) {
+      return res.status(400).json({ error: "Invalid image path" });
+    }
+
+    const extension = path.extname(absolutePath).toLowerCase();
+    if (!IMAGE_EXTENSIONS.has(extension)) {
+      return res.status(400).json({ error: "Unsupported image type" });
+    }
+
+    const sourceStat = await fs.stat(absolutePath);
+    const thumbKey = crypto
+      .createHash("sha1")
+      .update(`${relativePath}|${sourceStat.mtimeMs}|${sourceStat.size}|${width}`)
+      .digest("hex");
+    const thumbFile = path.join(THUMB_DIR, `${thumbKey}.webp`);
+
+    try {
+      await fs.access(thumbFile);
+    } catch (_missing) {
+      await sharp(absolutePath)
+        .rotate()
+        .resize({ width, height: width, fit: "cover", position: "attention" })
+        .webp({ quality: 72 })
+        .toFile(thumbFile);
+    }
+
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    return res.sendFile(thumbFile);
+  } catch (error) {
+    return res.status(404).json({ error: "Thumbnail not available", detail: error.message });
   }
 });
 

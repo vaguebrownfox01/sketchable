@@ -35,6 +35,7 @@ const state = {
   lastTapImageId: null,
   lastTapAt: 0,
   isOfflineSnapshot: false,
+  deferredInstallPrompt: null,
 };
 
 const elements = {
@@ -56,6 +57,7 @@ const elements = {
   viewerTitle: document.getElementById("viewerTitle"),
   viewerSubtitle: document.getElementById("viewerSubtitle"),
   viewerImage: document.getElementById("viewerImage"),
+  fullscreenBtn: document.getElementById("fullscreenBtn"),
   viewerFavoriteStar: document.getElementById("viewerFavoriteStar"),
   focusBtn: document.getElementById("focusBtn"),
   favoriteBtn: document.getElementById("favoriteBtn"),
@@ -95,6 +97,7 @@ const elements = {
   timelineMonthFilter: document.getElementById("timelineMonthFilter"),
   timelineBody: document.getElementById("timelineBody"),
   helpModal: document.getElementById("helpModal"),
+  installPwaBtn: document.getElementById("installPwaBtn"),
   closeHelpBtn: document.getElementById("closeHelpBtn"),
   dashboardModal: document.getElementById("dashboardModal"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
@@ -117,11 +120,7 @@ function formatDuration(durationMs) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function getTimerDisplayMs(elapsedMs) {
@@ -165,6 +164,15 @@ function showToast(message) {
   toastTimer = setTimeout(() => {
     toastEl.classList.remove("is-visible");
   }, 2600);
+}
+
+function updateInstallButtonVisibility() {
+  if (!elements.installPwaBtn) {
+    return;
+  }
+  const canPrompt = Boolean(state.deferredInstallPrompt);
+  elements.installPwaBtn.disabled = !canPrompt;
+  elements.installPwaBtn.textContent = canPrompt ? "install sketchable app" : "install from browser menu";
 }
 
 function readSnapshot(key, fallbackValue) {
@@ -321,7 +329,8 @@ function renderGallery() {
     }
 
     card.dataset.imageId = image.id;
-    thumb.src = image.imageUrl;
+    thumb.src = image.thumbUrl || image.imageUrl;
+    thumb.decoding = "async";
     if (image.isFavorite) {
       const badge = document.createElement("span");
       badge.className = "favorite-badge";
@@ -436,6 +445,7 @@ function renderViewer() {
   elements.actionBtn.textContent = isRunning ? "■ stop" : "▷ start";
   elements.actionBtn.classList.toggle("is-stop", isRunning);
   elements.viewerFavoriteStar.classList.toggle("is-hidden", !image.isFavorite);
+  elements.fullscreenBtn.textContent = document.fullscreenElement ? "⤢" : "⛶";
   elements.favoriteBtn.textContent = image.isFavorite ? "★ favorite" : "☆ favorite";
   elements.favoriteBtn.classList.toggle("is-on", image.isFavorite);
   elements.queueFabBtn.textContent = isImageInQueue(image.id) ? "−" : "＋";
@@ -451,6 +461,24 @@ function renderViewer() {
   }
 
   renderModalContent(image);
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+
+    const target = document.documentElement;
+    if (target.requestFullscreen) {
+      await target.requestFullscreen();
+    }
+  } catch (_error) {
+    showToast("fullscreen not available on this device");
+  } finally {
+    renderViewer();
+  }
 }
 
 function renderQueue() {
@@ -476,9 +504,10 @@ function renderQueue() {
 
     const thumb = document.createElement("img");
     thumb.className = "queue-thumb";
-    thumb.src = image.imageUrl;
+    thumb.src = image.thumbUrl || image.imageUrl;
     thumb.alt = image.fileName;
     thumb.loading = "lazy";
+    thumb.decoding = "async";
     selectBtn.appendChild(thumb);
 
     const badge = document.createElement("span");
@@ -545,7 +574,7 @@ function renderTimeline() {
     const tr = document.createElement("tr");
     const image = imageById.get(session.imageId);
     const imageCell = image
-      ? `<button class="timeline-thumb-btn ${image.isFavorite ? "is-favorite" : ""}" type="button" data-image-id="${image.id}" title="open image"><img class="timeline-thumb" src="${image.imageUrl}" alt="timeline image" /></button>`
+      ? `<button class="timeline-thumb-btn ${image.isFavorite ? "is-favorite" : ""}" type="button" data-image-id="${image.id}" title="open image"><img class="timeline-thumb" loading="lazy" decoding="async" src="${image.thumbUrl || image.imageUrl}" alt="timeline image" /></button>`
       : `<span class="timeline-missing">missing</span>`;
     tr.innerHTML = `<td>${formatDateTime(session.stoppedAt)}</td><td>${formatDateTime(session.imageDateTime)}</td><td>${formatDuration(session.durationMs)}</td><td>${session.mode}</td><td>${imageCell}</td>`;
     elements.timelineBody.appendChild(tr);
@@ -1123,6 +1152,23 @@ async function logout() {
   }
 }
 
+async function installPwa() {
+  const promptEvent = state.deferredInstallPrompt;
+  if (!promptEvent) {
+    showToast("open browser menu and choose install sketchable");
+    return;
+  }
+
+  promptEvent.prompt();
+  const choice = await promptEvent.userChoice;
+  if (choice?.outcome === "accepted") {
+    showToast("install started");
+  }
+
+  state.deferredInstallPrompt = null;
+  updateInstallButtonVisibility();
+}
+
 async function resetAllState() {
   const confirmed = window.confirm("this will reset all saved sketch data, queue, favorites, and history. continue?");
   if (!confirmed) {
@@ -1259,6 +1305,11 @@ function attachEvents() {
   elements.pauseBtn.addEventListener("click", pauseSketch);
   attachTimerResetHandlers(elements.timerDisplay);
   elements.markBtn.addEventListener("click", toggleSelectedSketchStatus);
+  elements.fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+  document.addEventListener("fullscreenchange", () => {
+    renderViewer();
+  });
 
   elements.modalActionBtn.addEventListener("click", actionPrimary);
   elements.modalPauseBtn.addEventListener("click", pauseSketch);
@@ -1319,6 +1370,7 @@ function attachEvents() {
   });
 
   elements.closeHelpBtn.addEventListener("click", closeHelpModal);
+  elements.installPwaBtn.addEventListener("click", installPwa);
   elements.helpModal.addEventListener("click", (event) => {
     if (event.target && event.target.dataset.closeHelp === "true") {
       closeHelpModal();
@@ -1383,6 +1435,8 @@ function attachEvents() {
       openDashboardModal();
     } else if (key === "v") {
       toggleSelectedFavoriteStatus();
+    } else if (key === "x") {
+      await toggleFullscreen();
     }
   });
 
@@ -1412,6 +1466,21 @@ function attachEvents() {
 
 async function init() {
   attachEvents();
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    state.deferredInstallPrompt = event;
+    updateInstallButtonVisibility();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    state.deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+    showToast("app installed");
+  });
+
+  updateInstallButtonVisibility();
+
   if ("serviceWorker" in navigator) {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });

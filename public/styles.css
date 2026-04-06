@@ -231,20 +231,23 @@ body.modal-open {
   width: 44px;
   height: 44px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 10px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(125, 211, 252, 0.95);
-  background: radial-gradient(circle at 30% 25%, rgba(108, 184, 255, 0.45), rgba(12, 24, 38, 0.92));
+  border: 1px solid rgba(125, 211, 252, 0.72);
+  background: transparent;
+  overflow: hidden;
   box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.42), 0 0 16px rgba(125, 211, 252, 0.35), 0 0 28px rgba(125, 211, 252, 0.2);
   animation: focusCall 1.8s ease-in-out infinite;
   margin-inline: 2px;
 }
 
-.focus-quick-btn svg {
-  width: 22px;
-  height: 22px;
-  fill: #e7f5ff;
+.focus-quick-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 .focus-quick-btn:hover {
@@ -791,6 +794,26 @@ button:active {
   gap: 8px;
 }
 
+.fullscreen-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 211, 252, 0.55);
+  background: linear-gradient(180deg, rgba(24, 46, 74, 0.92), rgba(18, 34, 56, 0.95));
+  color: #d9edff;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fullscreen-btn:hover {
+  border-color: rgba(125, 211, 252, 0.95);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
 .timeline-top-actions {
   display: inline-flex;
   gap: 8px;
@@ -879,9 +902,9 @@ button:active {
   position: relative;
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 10px;
+  padding: 6px;
   min-height: 340px;
-  max-height: 58vh;
+  max-height: 66vh;
   resize: vertical;
   overflow: auto;
   background: rgba(3, 7, 13, 0.92);
@@ -1079,8 +1102,24 @@ button:active {
 .help-content {
   width: min(780px, calc(100vw - 36px));
   height: auto;
-  background: rgba(10, 16, 29, 0.78);
-  backdrop-filter: blur(10px);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  background:
+    radial-gradient(circle at 88% -10%, rgba(71, 125, 198, 0.22), transparent 40%),
+    radial-gradient(circle at 0% 110%, rgba(44, 167, 156, 0.16), transparent 44%),
+    rgba(10, 16, 29, 0.86);
+  backdrop-filter: blur(12px);
+}
+
+.focus-content.help-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.focus-content.help-content .focus-top {
+  flex: 0 0 auto;
 }
 
 .dashboard-content {
@@ -1194,17 +1233,100 @@ button:active {
 
 .help-grid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  color: rgba(232, 240, 255, 0.9);
-  font-size: 0.95rem;
-  text-align: center;
-  max-width: 620px;
-  margin: 6px auto 0;
+  width: 100%;
+  margin: 2px 0 0;
+  align-items: start;
 }
 
-.help-grid p {
+.install-pwa-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 211, 252, 0.78);
+  background: linear-gradient(180deg, rgba(38, 78, 128, 0.96), rgba(25, 54, 93, 0.98));
+  color: #e4f5ff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 12px 16px;
+  margin-top: 10px;
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.28), 0 10px 26px rgba(18, 62, 105, 0.42);
+}
+
+.install-pwa-btn:disabled {
+  opacity: 0.74;
+  cursor: default;
+  border-color: rgba(148, 163, 184, 0.45);
+  background: linear-gradient(180deg, rgba(52, 67, 88, 0.9), rgba(41, 56, 78, 0.96));
+  box-shadow: none;
+}
+
+.install-pwa-btn:hover {
+  border-color: rgba(125, 211, 252, 1);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.36), 0 12px 30px rgba(22, 85, 148, 0.55);
+}
+
+.install-pwa-btn:disabled:hover {
+  border-color: rgba(148, 163, 184, 0.45);
+  box-shadow: none;
+}
+
+.help-card {
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(8, 14, 24, 0.75), rgba(7, 12, 21, 0.88));
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  text-align: left;
+  min-height: 0;
+}
+
+.help-card h3 {
   margin: 0;
-  line-height: 1.45;
+  color: #bfe7ff;
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.help-card p {
+  margin: 0;
+  color: rgba(232, 240, 255, 0.88);
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.help-shortcuts {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.help-shortcuts span {
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 999px;
+  background: rgba(8, 14, 24, 0.6);
+  color: rgba(222, 238, 255, 0.92);
+  font-size: 0.78rem;
+  padding: 5px 9px;
+}
+
+.help-shortcuts kbd {
+  display: inline-block;
+  border: 1px solid rgba(125, 211, 252, 0.38);
+  border-radius: 6px;
+  background: rgba(9, 16, 28, 0.95);
+  color: #d4ecff;
+  font-size: 0.73rem;
+  font-family: "JetBrains Mono", monospace;
+  padding: 1px 5px;
+  margin-right: 5px;
 }
 
 .focus-modal {
@@ -1236,11 +1358,51 @@ button:active {
   gap: 8px;
 }
 
+#focusModal .focus-content {
+  width: min(1400px, calc(100vw - 16px));
+  height: min(96vh, 980px);
+  padding: 10px;
+  gap: 6px;
+}
+
 .focus-content.timeline-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
+}
+
+:fullscreen .app-shell {
+  height: 100vh;
+  padding: 4px;
+  gap: 6px;
+}
+
+:fullscreen .topbar {
+  padding: 10px;
+  gap: 8px;
+}
+
+:fullscreen .month-panel {
+  padding: 6px;
+}
+
+:fullscreen .split-layout {
+  grid-template-columns: 180px minmax(0, 0.95fr) 10px minmax(0, 1.25fr);
+}
+
+:fullscreen .viewer-panel {
+  padding: 8px;
+}
+
+:fullscreen .timer-card {
+  padding: 8px;
+  gap: 6px;
+}
+
+:fullscreen .resizable-stage {
+  min-height: 44vh;
+  max-height: 74vh;
 }
 
 .focus-content.dashboard-content {
@@ -1326,6 +1488,11 @@ button:active {
   max-width: calc(100% - 8px);
 }
 
+#focusModal .focus-timer {
+  padding: 8px 10px;
+  max-width: calc(100% - 4px);
+}
+
 .focus-timer .timer-display {
   font-size: 2.4rem;
 }
@@ -1350,6 +1517,11 @@ button:active {
   background: #030811;
 }
 
+#focusModal .focus-image-wrap {
+  padding: 3px;
+  border-radius: 10px;
+}
+
 .focus-image-wrap img {
   width: 100%;
   height: 100%;
@@ -1363,6 +1535,10 @@ button:active {
   justify-content: center;
   align-items: center;
   margin-bottom: 4px;
+}
+
+#focusModal .focus-overlay {
+  margin-bottom: 2px;
 }
 
 .focus-overlay .timer-card {
@@ -1469,6 +1645,21 @@ button:active {
     height: calc(100vh - 16px);
     padding: 8px;
     gap: 6px;
+  }
+
+  #focusModal .focus-content {
+    width: calc(100vw - 8px);
+    height: calc(100vh - 8px);
+    padding: 6px;
+    gap: 5px;
+  }
+
+  #focusModal .focus-timer .timer-display {
+    font-size: 2.1rem;
+  }
+
+  .help-grid {
+    grid-template-columns: 1fr;
   }
 
   .focus-overlay {

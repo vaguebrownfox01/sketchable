@@ -6,6 +6,7 @@ sketchable is a local-first sketch reference app. it indexes your image folders,
 
 ### gallery and filtering
 - thumbnail gallery with search
+- server-generated webp thumbnails for faster mobile gallery loading
 - month-based filters (`all`, `jan` ... `dec`, `undated`)
 - available vs sketched tabs
 - date-first card labels for quick browsing
@@ -89,3 +90,4 @@ pm2 save
 - supported extensions: `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`.
 - excluded folders include `cwooks`, `node_modules`, `public`, `data`, and `.git`.
 - state schema includes settings, queue, sessions, and per-image records.
+- generated thumbnail cache is stored in `data/thumb-cache`.

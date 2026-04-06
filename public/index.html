@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="stylesheet" href="/styles.css?v=20260405-4" />
+    <link rel="stylesheet" href="/styles.css?v=20260405-11" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,9 +21,7 @@
             <button class="tab" data-tab="favorites" type="button">favorites</button>
             <span class="focus-divider" aria-hidden="true"></span>
             <button id="focusBtn" class="focus-quick-btn" type="button" aria-label="open focus view" title="focus view">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M12 5c5.5 0 9.3 4.5 10 6-.7 1.5-4.5 6-10 6s-9.3-4.5-10-6c.7-1.5 4.5-6 10-6zm0 2c-3.6 0-6.4 2.4-7.8 4 1.4 1.6 4.2 4 7.8 4s6.4-2.4 7.8-4c-1.4-1.6-4.2-4-7.8-4zm0 1.5A2.5 2.5 0 1 1 9.5 11 2.5 2.5 0 0 1 12 8.5z" />
-              </svg>
+              <img class="focus-quick-icon" src="/icon-192.png" alt="" aria-hidden="true" />
             </button>
           </div>
           <div class="quick-actions">
@@ -114,6 +112,7 @@
                 <p id="viewerSubtitle"></p>
               </div>
               <div class="viewer-actions">
+                <button id="fullscreenBtn" class="fullscreen-btn" type="button" aria-label="toggle app fullscreen" title="app fullscreen">⛶</button>
                 <button id="randomBtn" class="random-btn" type="button" aria-label="pick random image" title="random image">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M3 7h4l3 4m0 0 2.5 3.5M10 11l2.5-3.5L15 4h6M3 17h4l3-4m0 0 2.5-3.5M10 13l2.5 3.5L15 20h6" />
@@ -234,14 +233,38 @@
           </div>
           <button id="closeHelpBtn" type="button">close</button>
         </div>
+
         <div class="help-grid">
-          <p><strong>hey artist, welcome.</strong> pick a month and tap any image to start your sketch flow.</p>
-          <p>use <strong>＋ queue</strong> to collect references for this session, then move with <strong>← prev</strong> and <strong>next →</strong>.</p>
-          <p>choose <strong>◻ free</strong> for open timing, or <strong>◷ drill</strong> to practice with short focused drills.</p>
-          <p>hit <strong>start</strong>, <strong>pause</strong>, and <strong>stop</strong> as you sketch. mark done pieces in one tap.</p>
-          <p>open <strong>☰ timeline</strong> anytime to review your progress and session durations.</p>
-          <p><strong>keyboard:</strong> space start/pause, s stop, n next, p prev, q add to queue, v favorite, r random, f focus, t timeline.</p>
+          <article class="help-card">
+            <h3>start flow</h3>
+            <p>pick a month, tap a reference, then hit <strong>start</strong> to begin your sketch timer.</p>
+          </article>
+          <article class="help-card">
+            <h3>queue practice</h3>
+            <p>use <strong>+ queue</strong> to collect references, then navigate with <strong>prev</strong> and <strong>next</strong>.</p>
+          </article>
+          <article class="help-card">
+            <h3>modes</h3>
+            <p><strong>free</strong> gives open timing. <strong>drill</strong> runs fixed rounds with optional auto-next.</p>
+          </article>
+          <article class="help-card">
+            <h3>review progress</h3>
+            <p>open <strong>timeline</strong> to inspect sessions and <strong>dashboard</strong> for totals and trends.</p>
+          </article>
         </div>
+
+        <div class="help-shortcuts">
+          <span><kbd>space</kbd> start/pause</span>
+          <span><kbd>s</kbd> stop</span>
+          <span><kbd>q</kbd> add queue</span>
+          <span><kbd>n/p</kbd> next/prev</span>
+          <span><kbd>r</kbd> random</span>
+          <span><kbd>f</kbd> focus</span>
+          <span><kbd>t</kbd> timeline</span>
+          <span><kbd>d</kbd> dashboard</span>
+        </div>
+
+        <button id="installPwaBtn" class="install-pwa-btn" type="button">install sketchable app</button>
       </div>
     </div>
 
@@ -285,6 +308,6 @@
       </div>
     </div>
 
-    <script src="/app.js?v=20260405-4"></script>
+    <script src="/app.js?v=20260405-11"></script>
   </body>
 </html>

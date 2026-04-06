@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v20260405-4";
+const CACHE_VERSION = "v20260405-11";
 const SHELL_CACHE = `sketchable-shell-${CACHE_VERSION}`;
 const IMAGE_CACHE = `sketchable-images-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `sketchable-runtime-${CACHE_VERSION}`;
@@ -6,8 +6,8 @@ const RUNTIME_CACHE = `sketchable-runtime-${CACHE_VERSION}`;
 const SHELL_ASSETS = [
   "/",
   "/index.html",
-  "/styles.css?v=20260405-4",
-  "/app.js?v=20260405-4",
+  "/styles.css?v=20260405-11",
+  "/app.js?v=20260405-11",
   "/manifest.webmanifest",
   "/icon-192.png",
   "/icon-512.png",
@@ -87,6 +87,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.pathname.startsWith("/image/")) {
+    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    return;
+  }
+
+  if (url.pathname.startsWith("/thumb/")) {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
     return;
   }

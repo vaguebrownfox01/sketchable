@@ -3,6 +3,7 @@ node_modules/
 # Runtime data
 data/sketch-state.json
 data/sessions/
+data/thumb-cache/
 
 # Local photo library
 cwooks/
